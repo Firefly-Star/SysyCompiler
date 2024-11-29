@@ -42,7 +42,7 @@ using namespace std;
 CompUnit
   : FuncDef {
     auto comp_unit = std::make_unique<CompUnitAST>();
-    comp_unit->func_def = std::unique_ptr<BaseAST>($1);
+    comp_unit->func_def = std::unique_ptr<FuncDefAST>(dynamic_cast<FuncDefAST*>($1));
     ast = std::move(comp_unit);
   }
   ;
@@ -60,9 +60,9 @@ CompUnit
 FuncDef
   : FuncType IDENT '(' ')' Block {
     auto ast = new FuncDefAST();
-    ast->func_type = std::unique_ptr<BaseAST>($1);
+    ast->func_type = std::unique_ptr<FuncTypeAST>(dynamic_cast<FuncTypeAST*>($1));
     ast->ident = *unique_ptr<string>($2);
-    ast->block = std::unique_ptr<BaseAST>($5);
+    ast->block = std::unique_ptr<BlockAST>(dynamic_cast<BlockAST*>($5));
     $$ = ast;
   }
   ;
@@ -79,7 +79,7 @@ FuncType
 Block
   : '{' Stmt '}' {
     auto ast = new BlockAST();
-    ast->stmt = std::unique_ptr<BaseAST>($2);
+    ast->stmt = std::unique_ptr<StmtAST>(dynamic_cast<StmtAST*>($2));
     $$ = ast;
   }
   ;
