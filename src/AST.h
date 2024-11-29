@@ -22,7 +22,7 @@ public:
     virtual void Dump() const
     {
         program.functions.push_back(func_def->function);
-        func_def->Dump();
+        program
     }
 };
 

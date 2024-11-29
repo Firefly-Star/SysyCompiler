@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 #include <variant>
+#include <type_trait>
+#include "SysyType.h"
 
 // 为了方便，就把类的成员全部暴露出来了，改的时候注意一点
 
@@ -19,51 +21,49 @@ public:
 // 值（全局变量和函数参数） 目前支持浮点数和32位有符号整数
 class KoopaValue : public KoopaComponent {
 public:
-    std::variant<int, float> value;
+    std::variant<int, float, Nonetype_t> value;
     std::string name;
     bool isGlobal;
 
 public:
-    KoopaValue(const std::string& name, bool isGlobal) 
-        : name(name), isGlobal(isGlobal) {}
+    virtual void Dump() const override = 0;
+};
 
-    void Dump() const override
+void Dump(std::variant<int, float, NoneType_t> const& value)
+{
+    std::visit([](auto& value){
+        using value_type = std::
+    })
+}
+
+class KoopaConstant : public KoopaValue
+{
+public:
+    virtual void Dump() const override
     {
-        if(isGlobal)
+        switch(type)
         {
-            koopaOut << "@" << name << ": ";
-        }
-        else
-        {
-            koopaOut << "%" << name << ": ";
+            case
         }
     }
 };
 
 // 指令
 class KoopaInstruction : public KoopaComponent {
-public:
-    enum class InstructionType 
-    { 
-        BINARY, ASSIGN, CALL, RETURN 
-    };
+    void Dump() const = 0;
+};
 
+class KoopaReturnInstruction : public KoopaInstruction
+{
 public:
-    InstructionType type;
-    KoopaValue result;
-    std::vector<KoopaValue> operands;
-
+    std::shared_ptr<KoopaValue> returnValue;
 public:
-    KoopaInstruction(InstructionType type, KoopaValue result)
-        : type(type), result(result) {}
-
     void Dump() const override
     {
-        if (type == InstructionType::RETURN) 
-        {
-        }
+        koopaOut << "ret ";
+        returnValue->Dump();
     }
-};
+}
 
 // 基本块
 class KoopaBasicBlock : public KoopaComponent {
@@ -89,8 +89,8 @@ public:
 class KoopaFunction : public KoopaComponent {
 public:
     std::string name;
-    std::vector<KoopaValue> params;
-    std::shared_ptr<KoopaBasicBlock> entryBlock;
+    std::vector<std::shared_ptr<KoopaValue>> params;
+    std::vector<std::shared_ptr<KoopaBasicBlock>> blocks;
 
 public:
     KoopaFunction(const std::string& name) 
@@ -98,27 +98,25 @@ public:
 
     void Dump() const override
     {
-        koopaOut << "fun @" << name << "(): i32 {\n"; // 假设返回类型是 i32
-        if (entryBlock) 
+        for (auto const& block : blocks)
         {
-            entryBlock->Dump();
+            block->Dump();
         }
-        koopaOut << "}\n";
     }
 };
 
 // 程序
 class KoopaProgram : public KoopaComponent {
 public:
-    std::vector<KoopaValue> globals;
-    std::vector<KoopaFunction> functions;
+    std::vector<std::shared_ptr<KoopaValue>> globals;
+    std::vector<std::shared_ptr<KoopaFunction>> functions;
 
 public:
     void Dump() const override
     {
         for (auto const& function : functions)
         {
-            function.Dump();
+            function->Dump();
         }
     }
 };
