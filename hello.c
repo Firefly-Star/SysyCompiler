@@ -4,7 +4,15 @@ int main() {
     z = z + 1;
     {
         int x = 10;
-        int y = 20;{
+        int y = 20;
+    }
+    if (1)
+    {
+        return x;
+    }
+    else
+    {
+        return y; 
     }
     return z;  
 }

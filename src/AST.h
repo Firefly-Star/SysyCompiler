@@ -133,6 +133,25 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// Stmt ::= "if" "(" Exp ")" Stmt
+class StmtAST6 : public StmtAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    std::shared_ptr<StmtAST> true_stmt;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// Stmt ::= "if" "(" Exp ")" Stmt "else" Stmt
+class StmtAST7 : public StmtAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    std::shared_ptr<StmtAST> true_stmt;
+    std::shared_ptr<StmtAST> false_stmt;
+    virtual void Dump(Stream& stream) const override;
+};
+
 // Exp ::= LOrExp
 class ExpAST : public BaseAST
 {

@@ -26,7 +26,7 @@ using namespace std;
     BaseAST* ast_val;
 }
 
-%token INT RETURN CONST
+%token INT RETURN CONST IF ELSE
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
@@ -107,6 +107,25 @@ Stmt
   : Block {
     auto ast = new StmtAST5();
     ast->block = shared_cast<BlockAST>($1);
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : IF '(' Exp ')' Stmt {
+    auto ast = new StmtAST6();
+    ast->exp = shared_cast<ExpAST>($3);
+    ast->true_stmt = shared_cast<StmtAST>($5);
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : IF '(' Exp ')' Stmt ELSE Stmt {
+    auto ast = new StmtAST7();
+    ast->exp = shared_cast<ExpAST>($3);
+    ast->true_stmt = shared_cast<StmtAST>($5);
+    ast->false_stmt = shared_cast<StmtAST>($7);
     $$ = ast;
   }
   ;

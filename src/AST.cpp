@@ -200,3 +200,11 @@ void StmtAST4::Dump(Stream &stream) const
 void StmtAST5::Dump(Stream &stream) const
 {
 }
+
+void StmtAST6::Dump(Stream &stream) const
+{
+}
+
+void StmtAST7::Dump(Stream &stream) const
+{
+}
