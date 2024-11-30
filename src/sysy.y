@@ -26,11 +26,11 @@ using namespace std;
     BaseAST* ast_val;
 }
 
-%token INT RETURN
+%token INT RETURN CONST
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp Decl ConstDecl BType ConstDef ConstDefs ConstInitVal ConstExp BlockItem BlockItems LVal
 %type <int_val> Number
 %type <str_val> UnaryOp MulOp AddOp EqOp RelOp
 
@@ -68,9 +68,9 @@ FuncType
   ;
 
 Block
-  : '{' Stmt '}' {
+  : '{' BlockItems '}' {
     auto ast = new BlockAST();
-    ast->stmt = std::unique_ptr<StmtAST>(dynamic_cast<StmtAST*>($2));
+    ast->block_items = shared_cast<BlockItemsAST>($2);
     $$ = ast;
   }
   ;
@@ -103,6 +103,14 @@ PrimaryExp
   : Number {
     auto ast = new PrimaryExpAST2();
     ast->number = $1;
+    $$ = ast;
+  }
+  ;
+
+PrimaryExp
+  : LVal {
+    auto ast = new PrimaryExpAST3();
+    ast->lval = shared_cast<LValAST>($1);
     $$ = ast;
   }
   ;
@@ -271,6 +279,117 @@ LOrExp
     auto ast = new LOrExpAST2();
     ast->l_or_exp = shared_cast<LOrExpAST>($1);
     ast->l_and_exp = shared_cast<LAndExpAST>($4);
+    $$ = ast;
+  }
+  ;
+
+Decl
+  : ConstDecl {
+    auto ast = new DeclAST1();
+    ast->const_decl = shared_cast<ConstDeclAST>($1);
+    $$ = ast;
+  }
+  ;
+
+ConstDecl
+  : CONST BType ConstDef ConstDefs ';' {
+    auto ast = new ConstDeclAST();
+    ast->btype = shared_cast<BTypeAST>($2);
+    ast->const_def = shared_cast<ConstDefAST>($3);
+    ast->const_defs = shared_cast<ConstDefsAST>($4);
+    $$ = ast;
+  }
+  ;
+
+BType
+  : INT {
+    auto ast = new BTypeAST();
+    ast->type = SysyType::INT;
+    $$ = ast;
+  }
+  ;
+
+ConstDef
+  : IDENT '=' ConstInitVal {
+    auto ast = new ConstDefAST();
+    ast->ident = *$1;
+    ast->const_init_val = shared_cast<ConstInitValAST>($3);
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+ConstDefs
+  : {
+    auto ast = new ConstDefsAST1();
+    $$ = ast;
+  }
+  ;
+
+ConstDefs
+  : ',' ConstDef ConstDefs {
+    auto ast = new ConstDefsAST2();
+    ast->const_def = shared_cast<ConstDefAST>($2);
+    ast->const_defs = shared_cast<ConstDefsAST>($3);
+    $$ = ast;
+  }
+  ;
+
+ConstInitVal
+  : ConstExp {
+    auto ast = new ConstInitValAST();
+    ast->const_exp = shared_cast<ConstExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+BlockItems
+  : {
+    auto ast = new BlockItemsAST1();
+    $$ = ast;
+  }
+  ;
+
+BlockItems
+  : BlockItem BlockItems {
+    auto ast = new BlockItemsAST2();
+    ast->block_item = shared_cast<BlockItemAST>($1);
+    ast->block_items = shared_cast<BlockItemsAST>($2);
+    $$ = ast;
+  }
+  ;
+
+BlockItem
+  : Decl {
+    auto ast = new BlockItemAST1();
+    ast->decl = shared_cast<DeclAST>($1);
+    $$ = ast;
+  }
+  ;
+
+BlockItem
+  : Stmt {
+    auto ast = new BlockItemAST2();
+    ast->stmt = shared_cast<StmtAST>($1);
+    $$ = ast;
+  }
+  ;
+
+LVal
+  : IDENT {
+    auto ast = new LValAST();
+    ast->ident = *$1;
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+ConstExp
+  : Exp {
+    auto ast = new ConstExpAST();
+    ast->exp = shared_cast<ExpAST>($1);
     $$ = ast;
   }
   ;

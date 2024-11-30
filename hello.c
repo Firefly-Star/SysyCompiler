@@ -1,3 +1,4 @@
 int main() {
-  return 1 <= 2;  // 看起来像个颜文字
+    const int x = 1 + 1, y = 10;
+    return x;  // 看起来像个颜文字
 }

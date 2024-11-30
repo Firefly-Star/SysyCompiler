@@ -47,3 +47,6 @@ make
 make
 ./build/compiler o hello.c o hello
 exit
+./build/compiler o hello.c o hello
+./build/compiler o hello.c o hello
+exit
