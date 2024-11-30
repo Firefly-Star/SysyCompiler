@@ -9,20 +9,20 @@
 #include <type_traits>
 #include "SysyType.h"
 
-// ÎªÁË·½±ã£¬¾Í°ÑÀàµÄ³ÉÔ±È«²¿±©Â¶³öÀ´ÁË£¬¸ÄµÄÊ±ºò×¢ÒâÒ»µã
+// ä¸ºäº†æ–¹ä¾¿ï¼Œå°±æŠŠç±»çš„æˆå‘˜å…¨éƒ¨æš´éœ²å‡ºæ¥äº†ï¼Œæ”¹çš„æ—¶å€™æ³¨æ„ä¸€ç‚¹
 
-// È«¾ÖµÄÒ»¸öÊä³öÁ÷£¬Î´À´¿ÉÒÔÌæ»»³Éfstream
+// å…¨å±€çš„ä¸€ä¸ªè¾“å‡ºæµï¼Œæœªæ¥å¯ä»¥æ›¿æ¢æˆfstream
 
-// ³éÏóÀà£¬ÓÃÓÚ¶¨ÒåÒ»¸öÍ¨ÓÃµÄ Koopa ×é¼ş½Ó¿Ú
+// æŠ½è±¡ç±»ï¼Œç”¨äºå®šä¹‰ä¸€ä¸ªé€šç”¨çš„ Koopa ç»„ä»¶æ¥å£
 class KoopaComponent {
 public:
-    virtual ~KoopaComponent() = default; // ĞéÎö¹¹º¯Êı
-    virtual void Dump() const = 0;        // ÓÃÓÚÉú³É´úÂë
+    virtual ~KoopaComponent() = default; // è™šææ„å‡½æ•°
+    virtual void Dump() const = 0;        // ç”¨äºç”Ÿæˆä»£ç 
 };
 
 inline std::ostream& koopaOut = std::cout;
 
-// Öµ£¨È«¾Ö±äÁ¿ºÍº¯Êı²ÎÊı£© Ä¿Ç°Ö§³Ö¸¡µãÊıºÍ32Î»ÓĞ·ûºÅÕûÊı
+// å€¼ï¼ˆå…¨å±€å˜é‡å’Œå‡½æ•°å‚æ•°ï¼‰ ç›®å‰æ”¯æŒæµ®ç‚¹æ•°å’Œ32ä½æœ‰ç¬¦å·æ•´æ•°
 class KoopaValue : public KoopaComponent {
 public:
     std::variant<int, float, NoneType_t> value;
@@ -62,7 +62,7 @@ public:
     }
 };
 
-// Ö¸Áî
+// æŒ‡ä»¤
 class KoopaInstruction : public KoopaComponent {
 public:
     void Dump() const = 0;
@@ -81,7 +81,7 @@ public:
     }
 };
 
-// »ù±¾¿é
+// åŸºæœ¬å—
 class KoopaBasicBlock : public KoopaComponent {
 public:
     std::string name;
@@ -101,7 +101,7 @@ public:
     }
 };
 
-// º¯Êı
+// å‡½æ•°
 class KoopaFunction : public KoopaComponent {
 public:
     std::string name;
@@ -129,7 +129,7 @@ public:
     }
 };
 
-// ³ÌĞò
+// ç¨‹åº
 class KoopaProgram : public KoopaComponent {
 public:
     std::vector<std::shared_ptr<KoopaValue>> globals;

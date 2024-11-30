@@ -188,3 +188,15 @@ void StmtAST2::Dump(Stream &stream) const
 void InitValAST::Dump(Stream &stream) const
 {
 }
+
+void StmtAST3::Dump(Stream &stream) const
+{
+}
+
+void StmtAST4::Dump(Stream &stream) const
+{
+}
+
+void StmtAST5::Dump(Stream &stream) const
+{
+}

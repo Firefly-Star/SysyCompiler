@@ -110,6 +110,29 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// Stmt ::= ";"
+class StmtAST3 : public StmtAST
+{
+public:
+    virtual void Dump(Stream& stream) const override;
+};
+
+// Stmt ::= Exp ";"
+class StmtAST4 : public StmtAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// Stmt ::= Block
+class StmtAST5 : public StmtAST
+{
+public:
+    std::shared_ptr<BlockAST> block;
+    virtual void Dump(Stream& stream) const override;
+};
+
 // Exp ::= LOrExp
 class ExpAST : public BaseAST
 {

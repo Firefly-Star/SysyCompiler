@@ -35,7 +35,6 @@ using namespace std;
 %type <str_val> UnaryOp MulOp AddOp EqOp RelOp
 
 %%
-// 开始符, CompUnit ::= FuncDef, 大括号后声明了解析完成后 parser 要做的事情
 CompUnit
   : FuncDef {
     auto comp_unit = std::make_unique<CompUnitAST>();
@@ -44,8 +43,6 @@ CompUnit
   }
   ;
 
-// FuncDef ::= FuncType IDENT '(' ')' Block;
-// 我们这里可以直接写 '(' 和 ')', 因为之前在 lexer 里已经处理了单个字符的情况
 FuncDef
   : FuncType IDENT '(' ')' Block {
     auto ast = new FuncDefAST();
@@ -58,7 +55,6 @@ FuncDef
   }
   ;
 
-// 同上, 不再解释
 FuncType
   : INT {
     auto ast = new FuncTypeAST();
@@ -87,7 +83,30 @@ Stmt
 Stmt
   : RETURN Exp ';' {
     auto ast = new StmtAST1();
-    ast->exp = std::shared_ptr<ExpAST>(dynamic_cast<ExpAST*>($2));
+    ast->exp = shared_cast<ExpAST>($2);
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : ';' {
+    auto ast = new StmtAST3();
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : Exp ';' {
+    auto ast = new StmtAST4();
+    ast->exp = shared_cast<ExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : Block {
+    auto ast = new StmtAST5();
+    ast->block = shared_cast<BlockAST>($1);
     $$ = ast;
   }
   ;
