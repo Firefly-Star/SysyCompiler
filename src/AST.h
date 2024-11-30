@@ -161,6 +161,20 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// Stmt ::= "break" ";"
+class StmtAST9 : public StmtAST
+{
+public:
+    virtual void Dump(Stream& stream) const override;
+};
+
+// Stmt ::= "continue" ";"
+class StmtAST10 : public StmtAST
+{
+public:
+    virtual void Dump(Stream& stream) const override;
+};
+
 // Exp ::= LOrExp
 class ExpAST : public BaseAST
 {

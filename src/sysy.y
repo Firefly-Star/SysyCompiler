@@ -26,7 +26,7 @@ using namespace std;
     BaseAST* ast_val;
 }
 
-%token INT RETURN CONST IF ELSE WHILE
+%token INT RETURN CONST IF ELSE WHILE BREAK CONTINUE
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
@@ -135,6 +135,20 @@ Stmt
     auto ast = new StmtAST8();
     ast->exp = shared_cast<ExpAST>($3);
     ast->stmt = shared_cast<StmtAST>($5);
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : BREAK ';' {
+    auto ast = new StmtAST9();
+    $$ = ast;
+  }
+  ;
+
+Stmt
+  : CONTINUE ';' {
+    auto ast = new StmtAST10();
     $$ = ast;
   }
   ;

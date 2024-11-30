@@ -17,7 +17,13 @@
     Block         ::= "{" {BlockItem} "}";
     BlockItem     ::= Decl | Stmt;
     Stmt          ::= LVal "=" Exp ";"
-                    | "return" Exp ";";
+                    | [Exp] ";"
+                    | Block
+                    | "if" "(" Exp ")" Stmt ["else" Stmt]
+                    | "while" "(" Exp ")" Stmt
+                    | "break" ";"
+                    | "continue" ";"
+                    | "return" [Exp] ";";
 
     Exp           ::= LOrExp;
     LVal          ::= IDENT;
