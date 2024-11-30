@@ -38,6 +38,10 @@ class BlockItemAST;
 class BlockItemsAST;
 class LValAST;
 class ConstExpAST;
+class VarDeclAST;
+class VarDefAST;
+class VarDefsAST;
+class InitValAST;
 
 using Stream = std::ofstream;
 class BaseAST
@@ -83,10 +87,25 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// Stmt ::= "return" Exp ";"
 class StmtAST : public BaseAST
 {
 public:
+    virtual void Dump(Stream& stream) const = 0;
+};
+
+// Stmt ::= "return" Exp ";"
+class StmtAST1 : public StmtAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// Stmt ::= LVal "=" Exp ";"
+class StmtAST2 : public StmtAST
+{
+public:
+    std::shared_ptr<LValAST> lval;
     std::shared_ptr<ExpAST> exp;
     virtual void Dump(Stream& stream) const override;
 };
@@ -325,6 +344,14 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// Decl ::= ConstDecl | VarDecl
+class DeclAST2 : public DeclAST
+{
+public:
+    std::shared_ptr<VarDeclAST> var_decl;
+    virtual void Dump(Stream& stream) const override;
+};
+
 // ConstDecl ::= "const" BType ConstDef ConstDefs ";"
 class ConstDeclAST : public BaseAST
 {
@@ -445,3 +472,71 @@ public:
     std::shared_ptr<ExpAST> exp;
     virtual void Dump(Stream& stream) const override;
 };
+
+// VarDecl ::= BType VarDef VarDefs ";"
+class VarDeclAST : public BaseAST
+{
+public:
+    std::shared_ptr<BTypeAST> btype;
+    std::shared_ptr<VarDefAST> var_def;
+    std::shared_ptr<VarDefsAST> var_defs;
+    virtual void Dump(Stream& stream) const override;
+};
+
+class VarDefsAST : public BaseAST
+{
+public:
+    virtual void Dump(Stream& stream) const = 0;
+};
+
+// VarDefs ::= epsilon
+class VarDefsAST1 : public VarDefsAST
+{
+public:
+    virtual void Dump(Stream& stream) const override;
+};
+
+// VarDefs ::= VarDef VarDefs
+class VarDefsAST2 : public VarDefsAST
+{
+public:
+    std::shared_ptr<VarDefAST> var_def;
+    std::shared_ptr<VarDefsAST> var_defs;
+    virtual void Dump(Stream& stream) const override;
+};
+
+
+class VarDefAST : public BaseAST
+{
+public:
+    virtual void Dump(Stream& stream) const = 0;
+};
+
+// VarDef ::= IDENT
+class VarDefAST1 : public VarDefAST
+{
+public:
+    std::string ident;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// VarDef ::= IDENT "=" InitVal
+class VarDefAST2 : public VarDefAST
+{
+public:
+    std::string ident;
+    std::shared_ptr<VarDefAST> init_val;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// InitVal ::= Exp
+class InitValAST : public BaseAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+
+    virtual void Dump(Stream& stream) const override;
+};
+

@@ -30,7 +30,7 @@ using namespace std;
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp Decl ConstDecl BType ConstDef ConstDefs ConstInitVal ConstExp BlockItem BlockItems LVal
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp Decl ConstDecl BType ConstDef ConstDefs ConstInitVal ConstExp BlockItem BlockItems LVal VarDecl VarDef VarDefs InitVal
 %type <int_val> Number
 %type <str_val> UnaryOp MulOp AddOp EqOp RelOp
 
@@ -76,8 +76,17 @@ Block
   ;
 
 Stmt
+  : LVal '=' Exp ';' {
+    auto ast = new StmtAST2();
+    ast->lval = shared_cast<LValAST>($1);
+    ast->exp = shared_cast<ExpAST>($3);
+    $$ = ast;
+  }
+  ;
+
+Stmt
   : RETURN Exp ';' {
-    auto ast = new StmtAST();
+    auto ast = new StmtAST1();
     ast->exp = std::shared_ptr<ExpAST>(dynamic_cast<ExpAST*>($2));
     $$ = ast;
   }
@@ -291,6 +300,14 @@ Decl
   }
   ;
 
+Decl
+  : VarDecl {
+    auto ast = new DeclAST2();
+    ast->var_decl = shared_cast<VarDeclAST>($1);
+    $$ = ast;
+  }
+  ;
+
 ConstDecl
   : CONST BType ConstDef ConstDefs ';' {
     auto ast = new ConstDeclAST();
@@ -389,6 +406,61 @@ LVal
 ConstExp
   : Exp {
     auto ast = new ConstExpAST();
+    ast->exp = shared_cast<ExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+VarDecl
+  : BType VarDef VarDefs ';' {
+    auto ast = new VarDeclAST();
+    ast->btype = shared_cast<BTypeAST>($1);
+    ast->var_def = shared_cast<VarDefAST>($2);
+    ast->var_defs = shared_cast<VarDefsAST>($3);
+    $$ = ast;
+  } 
+  ;
+
+VarDefs
+  : {
+    auto ast = new VarDefsAST1();
+    $$ = ast;
+  }
+  ;
+
+VarDefs
+  : VarDef VarDefs {
+    auto ast = new VarDefsAST2();
+    ast->var_def = shared_cast<VarDefAST>($1);
+    ast->var_defs = shared_cast<VarDefsAST>($2);
+    $$ = ast;
+  }
+  ;
+
+VarDef
+  : IDENT {
+    auto ast = new VarDefAST1();
+    ast->ident = *$1;
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+VarDef
+  : IDENT '=' InitVal {
+    auto ast = new VarDefAST2();
+    ast->ident = *$1;
+    ast->init_val = shared_cast<VarDefAST>($3);
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+InitVal
+  : Exp {
+    auto ast = new InitValAST();
     ast->exp = shared_cast<ExpAST>($1);
     $$ = ast;
   }

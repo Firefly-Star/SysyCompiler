@@ -28,9 +28,6 @@ void BlockAST::Dump(Stream& stream) const
     stream << "%entry: \n";
 }
 
-void StmtAST::Dump(Stream& stream) const
-{
-}
 
 void ExpAST::Dump(Stream &stream) const
 {
@@ -153,5 +150,41 @@ void BTypeAST::Dump(Stream &stream) const
 }
 
 void ConstInitValAST::Dump(Stream &stream) const
+{
+}
+
+void DeclAST2::Dump(Stream &stream) const
+{
+}
+
+void VarDeclAST::Dump(Stream &stream) const
+{
+}
+
+void VarDefsAST1::Dump(Stream &stream) const
+{
+}
+
+void VarDefsAST2::Dump(Stream &stream) const
+{
+}
+
+void VarDefAST1::Dump(Stream &stream) const
+{
+}
+
+void VarDefAST2::Dump(Stream &stream) const
+{
+}
+
+void StmtAST1::Dump(Stream &stream) const
+{
+}
+
+void StmtAST2::Dump(Stream &stream) const
+{
+}
+
+void InitValAST::Dump(Stream &stream) const
 {
 }

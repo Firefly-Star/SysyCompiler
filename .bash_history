@@ -50,3 +50,11 @@ exit
 ./build/compiler o hello.c o hello
 ./build/compiler o hello.c o hello
 exit
+make
+make
+make
+./build/compiler hello.c o hello
+./build/compiler o hello.c o hello
+./build/compiler o hello.c o hello
+./build/compiler o hello.c o hello
+exit
