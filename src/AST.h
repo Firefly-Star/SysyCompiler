@@ -152,6 +152,15 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// Stmt ::= "while" "(" Exp ")" Stmt
+class StmtAST8 : public StmtAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    std::shared_ptr<StmtAST> stmt;
+    virtual void Dump(Stream& stream) const override;
+};
+
 // Exp ::= LOrExp
 class ExpAST : public BaseAST
 {

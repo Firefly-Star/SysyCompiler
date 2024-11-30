@@ -63,3 +63,8 @@ make
 ./build/compiler o hello.c o o
 ./build/compiler o hello.c o o
 exit
+make
+./build/compiler o hello.c o hello
+./build/compiler o hello.c o hello
+./build/compiler o hello.c o hello
+exit

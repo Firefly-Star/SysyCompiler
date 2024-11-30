@@ -14,5 +14,9 @@ int main() {
     {
         return y; 
     }
+    while(1)
+    {
+        return z; 123; 
+    }
     return z;  
 }
