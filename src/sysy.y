@@ -18,7 +18,7 @@ using namespace std;
 
 %}
 
-%parse-param {std::unique_ptr<BaseAST>& ast}
+%parse-param {std::unique_ptr<BaseAST>& ast_root}
 
 %union{
     std::string* str_val;
@@ -27,43 +27,34 @@ using namespace std;
 }
 
 %token INT RETURN
-%token <str_val> IDENT
+%token <str_val> IDENT 
 %token <int_val> INT_CONST
 
-%type <ast_val> FuncDef FuncType Block Stmt
+%type <ast_val> FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp
 %type <int_val> Number
+%type <str_val> UnaryOp MulOp AddOp EqOp RelOp
 
 %%
 // 开始符, CompUnit ::= FuncDef, 大括号后声明了解析完成后 parser 要做的事情
-// 之前我们定义了 FuncDef 会返回一个 str_val, 也就是字符串指针
-// 而 parser 一旦解析完 CompUnit, 就说明所有的 token 都被解析了, 即解析结束了
-// 此时我们应该把 FuncDef 返回的结果收集起来, 作为 AST 传给调用 parser 的函数
-// $1 指代规则里第一个符号的返回值, 也就是 FuncDef 的返回值
 CompUnit
   : FuncDef {
     auto comp_unit = std::make_unique<CompUnitAST>();
     comp_unit->func_def = std::unique_ptr<FuncDefAST>(dynamic_cast<FuncDefAST*>($1));
-    ast = std::move(comp_unit);
+    ast_root = std::move(comp_unit);
   }
   ;
 
 // FuncDef ::= FuncType IDENT '(' ')' Block;
 // 我们这里可以直接写 '(' 和 ')', 因为之前在 lexer 里已经处理了单个字符的情况
-// 解析完成后, 把这些符号的结果收集起来, 然后拼成一个新的字符串, 作为结果返回
-// $$ 表示非终结符的返回值, 我们可以通过给这个符号赋值的方法来返回结果
-// 你可能会问, FuncType, IDENT 之类的结果已经是字符串指针了
-// 为什么还要用 unique_ptr 接住它们, 然后再解引用, 把它们拼成另一个字符串指针呢
-// 因为所有的字符串指针都是我们 new 出来的, new 出来的内存一定要 delete
-// 否则会发生内存泄漏, 而 unique_ptr 这种智能指针可以自动帮我们 delete
-// 虽然此处你看不出用 unique_ptr 和手动 delete 的区别, 但当我们定义了 AST 之后
-// 这种写法会省下很多内存管理的负担
 FuncDef
   : FuncType IDENT '(' ')' Block {
     auto ast = new FuncDefAST();
     ast->func_type = std::unique_ptr<FuncTypeAST>(dynamic_cast<FuncTypeAST*>($1));
-    ast->ident = *unique_ptr<string>($2);
+    ast->ident = *$2;
     ast->block = std::unique_ptr<BlockAST>(dynamic_cast<BlockAST*>($5));
     $$ = ast;
+
+    delete $2;
   }
   ;
 
@@ -85,16 +76,202 @@ Block
   ;
 
 Stmt
-  : RETURN Number ';' {
+  : RETURN Exp ';' {
     auto ast = new StmtAST();
-    ast->number = $2;
+    ast->exp = std::shared_ptr<ExpAST>(dynamic_cast<ExpAST*>($2));
     $$ = ast;
+  }
+  ;
+
+Exp
+  : LOrExp {
+    auto ast = new ExpAST();
+    ast->l_or_exp = shared_cast<LOrExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+PrimaryExp
+  : '(' Exp ')' {
+    auto ast = new PrimaryExpAST1();
+    ast->exp = shared_cast<ExpAST>($2);
+    $$ = ast;
+  }
+  ;
+
+PrimaryExp
+  : Number {
+    auto ast = new PrimaryExpAST2();
+    ast->number = $1;
+    $$ = ast;
+  }
+  ;
+
+UnaryExp
+  : PrimaryExp {
+    auto ast = new UnaryExpAST1();
+    ast->primary_exp = shared_cast<PrimaryExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+UnaryExp
+  : UnaryOp UnaryExp {
+    auto ast = new UnaryExpAST2();
+    ast->op = *$1;
+    ast->unary_exp = shared_cast<UnaryExpAST>($2);
+    $$ = ast;
+
+    delete $1;
   }
   ;
 
 Number
   : INT_CONST {
     $$ = $1;
+  }
+  ;
+
+UnaryOp
+  : '+' { $$ = new std::string("+"); }
+  | '-' { $$ = new std::string("-"); }
+  | '!' { $$ = new std::string("!"); }
+  ;
+
+MulExp
+  : UnaryExp{
+    auto ast = new MulExpAST1();
+    ast->unary_exp = shared_cast<UnaryExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+MulExp
+  : MulExp MulOp UnaryExp {
+    auto ast = new MulExpAST2();
+    ast->mul_exp = shared_cast<MulExpAST>($1);
+    ast->op = *$2;
+    ast->unary_exp = shared_cast<UnaryExpAST>($3);
+    $$ = ast;
+
+    delete $2;
+  }
+  ;
+
+MulOp
+  : '*' { $$ = new std::string("*"); }
+  | '/' { $$ = new std::string("/"); }
+  | '%' { $$ = new std::string("%"); } 
+  ;
+
+AddExp
+  : MulExp {
+    auto ast = new AddExpAST1();
+    ast->mul_exp = shared_cast<MulExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+AddExp
+  : AddExp AddOp MulExp {
+    auto ast = new AddExpAST2();
+    ast->add_exp = shared_cast<AddExpAST>($1);
+    ast->op = *$2;
+    ast->mul_exp = shared_cast<MulExpAST>($3);
+    $$ = ast;
+
+    delete $2;
+  }
+  ;
+
+AddOp
+  : '+' { $$ = new std::string("+"); }
+  | '-' { $$ = new std::string("-"); }
+  ;
+
+RelExp
+  : AddExp {
+    auto ast = new RelExpAST1();
+    ast->add_exp = shared_cast<AddExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+RelExp
+  : RelExp RelOp AddExp {
+    auto ast = new RelExpAST2();
+    ast->rel_exp = shared_cast<RelExpAST>($1);
+    ast->op = *$2;
+    ast->add_exp = shared_cast<AddExpAST>($3);
+    $$ = ast;
+
+    delete $2;
+  }
+  ;
+
+RelOp
+  : '<' { $$ = new std::string("<"); }
+  | '>' { $$ = new std::string(">"); }
+  | '<' '=' { $$ = new std::string("<="); }
+  | '>' '=' { $$ = new std::string(">="); }
+  ;
+
+EqExp
+  : RelExp {
+    auto ast = new EqExpAST1();
+    ast->rel_exp = shared_cast<RelExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+EqExp
+  : EqExp EqOp RelExp {
+    auto ast = new EqExpAST2();
+    ast->eq_exp = shared_cast<EqExpAST>($1);
+    ast->op = *$2;
+    ast->rel_exp = shared_cast<RelExpAST>($3);
+    $$ = ast;
+
+    delete $2;
+  }
+  ;
+
+EqOp
+  : '=' '=' { $$ = new std::string("=="); }
+  | '!' '=' { $$ = new std::string("!="); }
+  ;
+
+LAndExp
+  : EqExp {
+    auto ast = new LAndExpAST1();
+    ast->eq_exp = shared_cast<EqExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+LAndExp
+  : LAndExp '&' '&' EqExp {
+    auto ast = new LAndExpAST2();
+    ast->l_and_exp = shared_cast<LAndExpAST>($1);
+    ast->eq_exp = shared_cast<EqExpAST>($4);
+    $$ = ast;
+  }
+  ;
+
+LOrExp
+  : LAndExp {
+    auto ast = new LOrExpAST1();
+    ast->l_and_exp = shared_cast<LAndExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+LOrExp
+  : LOrExp '|' '|' LAndExp {
+    auto ast = new LOrExpAST2();
+    ast->l_or_exp = shared_cast<LOrExpAST>($1);
+    ast->l_and_exp = shared_cast<LAndExpAST>($4);
+    $$ = ast;
   }
   ;
 
