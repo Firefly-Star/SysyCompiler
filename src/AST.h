@@ -47,6 +47,10 @@ class FuncFParamsAST;
 class FuncFParamAST;
 class FuncRParamsAST;
 class ExpsAST;
+class DimenConstExpAST;
+class ConstInitValsAST;
+class InitValsAST;
+class DimenExpAST;
 
 using Stream = std::ofstream;
 class BaseAST
@@ -460,11 +464,12 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// ConstDef ::= IDENT "=" ConstInitVal
+// ConstDef ::= IDENT [DimenConstExp] "=" ConstInitVal
 class ConstDefAST : public BaseAST
 {
 public:
     std::string ident;
+    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
     std::shared_ptr<ConstInitValAST> const_init_val;
     
     virtual void Dump(Stream& stream) const override;
@@ -480,11 +485,25 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// ConstInitVal ::= ConstExp
 class ConstInitValAST : public BaseAST
 {
 public:
+    virtual void Dump(Stream& stream) const = 0;
+};
+
+// ConstInitVal ::= ConstExp
+class ConstInitValAST1 : public ConstInitValAST
+{
+public:
     std::shared_ptr<ConstExpAST> const_exp;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// ConstInitVal ::= "{" [ConstInitVals] "}"
+class ConstInitValAST2 : public ConstInitValAST
+{
+public:
+    std::shared_ptr<ConstInitValsAST> const_init_vals;
     virtual void Dump(Stream& stream) const override;
 };
 
@@ -520,11 +539,12 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// LVal ::= IDENT
+// LVal ::= IDENT [DimenExp]
 class LValAST : public BaseAST
 {
 public:
     std::string ident;
+    std::shared_ptr<DimenExpAST> dimen_exp;
     virtual void Dump(Stream& stream) const override;
 };
 
@@ -560,30 +580,50 @@ public:
     virtual void Dump(Stream& stream) const = 0;
 };
 
-// VarDef ::= IDENT
+// VarDef ::= IDENT [DimenConstExp]
 class VarDefAST1 : public VarDefAST
 {
 public:
     std::string ident;
+    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
 
     virtual void Dump(Stream& stream) const override;
 };
 
-// VarDef ::= IDENT "=" InitVal
+// VarDef ::= IDENT [DimenConstExp] "=" InitVal
 class VarDefAST2 : public VarDefAST
 {
 public:
     std::string ident;
+    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
+
     std::shared_ptr<VarDefAST> init_val;
 
     virtual void Dump(Stream& stream) const override;
 };
 
-// InitVal ::= Exp
 class InitValAST : public BaseAST
 {
 public:
     std::shared_ptr<ExpAST> exp;
+
+    virtual void Dump(Stream& stream) const = 0;
+};
+
+// InitVal ::= Exp
+class InitValAST1 : public InitValAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// InitVal ::= "{" [InitVals] "}"
+class InitValAST2 : public InitValAST
+{
+public:
+    std::shared_ptr<InitValsAST> init_vals;
 
     virtual void Dump(Stream& stream) const override;
 };
@@ -597,12 +637,13 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// FuncFParam ::= BType IDENT
+// FuncFParam ::= BType IDENT ["[" "]" [DimenConstExp]]
 class FuncFParamAST : public BaseAST
 {
 public:
     std::shared_ptr<BTypeAST> btype;
     std::string ident;
+    std::shared_ptr<std::shared_ptr<DimenConstExpAST>> dimen_const_exp_wrap;
     virtual void Dump(Stream& stream) const override;
 };
 
@@ -621,6 +662,47 @@ class ExpsAST : public BaseAST
 public:
     std::shared_ptr<ExpAST> exp;
     std::shared_ptr<ExpsAST> exps;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// DimenConstExp ::= "[" ConstExp "]" [DimenConstExp]
+class DimenConstExpAST : public BaseAST
+{
+public:
+    std::shared_ptr<ConstExpAST> const_exp;
+    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// ConstInitVals ::= ConstInitVal ["," ConstInitVals]
+class ConstInitValsAST : public BaseAST
+{
+public:
+    std::shared_ptr<ConstInitValAST> const_init_val;
+    std::shared_ptr<ConstInitValsAST> const_init_vals;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+
+// InitVals ::= InitVal ["," InitVals]
+class InitValsAST : public BaseAST
+{
+public:
+    std::shared_ptr<InitValAST> init_val;
+    std::shared_ptr<InitValsAST> init_vals;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// DimenExp ::= "[" Exp "]" [DimenExp]
+class DimenExpAST : public BaseAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    std::shared_ptr<DimenExpAST> dimen_exp;
 
     virtual void Dump(Stream& stream) const override;
 };

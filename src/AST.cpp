@@ -1,7 +1,5 @@
 #include "AST.h"
 
-
-
 void FuncTypeAST::Dump(Stream& stream) const
 {
     switch(type)
@@ -121,10 +119,6 @@ void BTypeAST::Dump(Stream &stream) const
 {
 }
 
-void ConstInitValAST::Dump(Stream &stream) const
-{
-}
-
 void DeclAST2::Dump(Stream &stream) const
 {
 }
@@ -222,5 +216,37 @@ void RootAST::Dump(Stream &stream) const
 }
 
 void ExpsAST::Dump(Stream &stream) const
+{
+}
+
+void ConstInitValAST1::Dump(Stream &stream) const
+{
+}
+
+void ConstInitValAST2::Dump(Stream &stream) const
+{
+}
+
+void InitValAST1::Dump(Stream &stream) const
+{
+}
+
+void InitValAST2::Dump(Stream &stream) const
+{
+}
+
+void DimenConstExpAST::Dump(Stream &stream) const
+{
+}
+
+void ConstInitValsAST::Dump(Stream &stream) const
+{
+}
+
+void InitValsAST::Dump(Stream &stream) const
+{
+}
+
+void DimenExpAST::Dump(Stream &stream) const
 {
 }

@@ -2,6 +2,9 @@ int main() {
     const int x = 1 + 1, y = 10;
     int z = 10;
     z = z + 1;
+    int x[10] = {1, 2, {1, 2}};
+    x[10] = 20;
+    
     int x = y + 1, z = 10 + 30;
     {
         int x = 10;

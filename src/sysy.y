@@ -30,7 +30,7 @@ using namespace std;
 %token <str_val> IDENT 
 %token <int_val> INT_CONST
 
-%type <ast_val> Root CompUnit FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp Decl ConstDecl BType ConstDef ConstDefs ConstInitVal ConstExp BlockItem BlockItems LVal VarDecl VarDef VarDefs InitVal FuncFParams FuncFParam FuncRParams Exps
+%type <ast_val> Root CompUnit FuncDef FuncType Block Stmt Exp UnaryExp PrimaryExp MulExp AddExp RelExp EqExp LAndExp LOrExp Decl ConstDecl BType ConstDef ConstDefs ConstInitVal ConstExp BlockItem BlockItems LVal VarDecl VarDef VarDefs InitVal FuncFParams FuncFParam FuncRParams Exps DimenConstExp ConstInitVals InitVals DimenExp
 %type <int_val> Number
 %type <str_val> UnaryOp MulOp AddOp EqOp RelOp
 
@@ -488,10 +488,41 @@ ConstDef
   : IDENT '=' ConstInitVal {
     auto ast = new ConstDefAST();
     ast->ident = *$1;
+    ast->dimen_const_exp = nullptr;
     ast->const_init_val = shared_cast<ConstInitValAST>($3);
     $$ = ast;
 
     delete $1;
+  }
+  ;
+
+ConstDef
+  : IDENT DimenConstExp '=' ConstInitVal {
+    auto ast = new ConstDefAST();
+    ast->ident = *$1;
+    ast->dimen_const_exp = shared_cast<DimenConstExpAST>($2);
+    ast->const_init_val = shared_cast<ConstInitValAST>($4);
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+DimenConstExp
+  : '[' ConstExp ']' {
+    auto ast = new DimenConstExpAST();
+    ast->const_exp = shared_cast<ConstExpAST>($2);
+    ast->dimen_const_exp = nullptr;
+    $$ = ast;
+  }
+  ;
+
+DimenConstExp
+  : '[' ConstExp ']' DimenConstExp {
+    auto ast = new DimenConstExpAST();
+    ast->const_exp = shared_cast<ConstExpAST>($2);
+    ast->dimen_const_exp = shared_cast<DimenConstExpAST>($4);
+    $$ = ast;
   }
   ;
 
@@ -515,8 +546,42 @@ ConstDefs
 
 ConstInitVal
   : ConstExp {
-    auto ast = new ConstInitValAST();
+    auto ast = new ConstInitValAST1();
     ast->const_exp = shared_cast<ConstExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+ConstInitVal
+  : '{' '}' {
+    auto ast = new ConstInitValAST2();
+    ast->const_init_vals = nullptr;
+    $$ = ast;
+  }
+  ;
+
+ConstInitVal
+  : '{' ConstInitVals '}' {
+    auto ast = new ConstInitValAST2();
+    ast->const_init_vals = shared_cast<ConstInitValsAST>($2);
+    $$ = ast;
+  }
+  ;
+
+ConstInitVals
+  : ConstInitVal {
+    auto ast = new ConstInitValsAST();
+    ast->const_init_val = shared_cast<ConstInitValAST>($1);
+    ast->const_init_vals = nullptr;
+    $$ = ast;
+  }
+  ;
+
+ConstInitVals
+  : ConstInitVal ',' ConstInitVals {
+    auto ast = new ConstInitValsAST();
+    ast->const_init_val = shared_cast<ConstInitValAST>($1);
+    ast->const_init_vals = shared_cast<ConstInitValsAST>($3);
     $$ = ast;
   }
   ;
@@ -559,9 +624,39 @@ LVal
   : IDENT {
     auto ast = new LValAST();
     ast->ident = *$1;
+    ast->dimen_exp = nullptr;
     $$ = ast;
 
     delete $1;
+  }
+  ;
+
+LVal
+  : IDENT DimenExp {
+    auto ast = new LValAST();
+    ast->ident = *$1;
+    ast->dimen_exp = shared_cast<DimenExpAST>($2);
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+DimenExp
+  : '[' Exp ']' {
+    auto ast = new DimenExpAST();
+    ast->exp = shared_cast<ExpAST>($2);
+    ast->dimen_exp = nullptr;
+    $$ = ast;
+  }
+  ;
+
+DimenExp
+  : '[' Exp ']' DimenExp {
+    auto ast = new DimenExpAST();
+    ast->exp = shared_cast<ExpAST>($2);
+    ast->dimen_exp = shared_cast<DimenExpAST>($4);
+    $$ = ast;
   }
   ;
 
@@ -604,6 +699,18 @@ VarDef
   : IDENT {
     auto ast = new VarDefAST1();
     ast->ident = *$1;
+    ast->dimen_const_exp = nullptr;
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+VarDef
+  : IDENT DimenConstExp {
+    auto ast = new VarDefAST1();
+    ast->ident = *$1;
+    ast->dimen_const_exp = shared_cast<DimenConstExpAST>($2);
     $$ = ast;
 
     delete $1;
@@ -614,7 +721,20 @@ VarDef
   : IDENT '=' InitVal {
     auto ast = new VarDefAST2();
     ast->ident = *$1;
+    ast->dimen_const_exp = nullptr;
     ast->init_val = shared_cast<VarDefAST>($3);
+    $$ = ast;
+
+    delete $1;
+  }
+  ;
+
+VarDef
+  : IDENT DimenConstExp '=' InitVal {
+    auto ast = new VarDefAST2();
+    ast->ident = *$1;
+    ast->dimen_const_exp = shared_cast<DimenConstExpAST>($2);
+    ast->init_val = shared_cast<VarDefAST>($4);
     $$ = ast;
 
     delete $1;
@@ -623,8 +743,42 @@ VarDef
 
 InitVal
   : Exp {
-    auto ast = new InitValAST();
+    auto ast = new InitValAST1();
     ast->exp = shared_cast<ExpAST>($1);
+    $$ = ast;
+  }
+  ;
+
+InitVal
+  : '{' '}' {
+    auto ast = new InitValAST2();
+    ast->init_vals = nullptr;
+    $$ = ast;
+  }
+  ;
+
+InitVal
+  : '{' InitVals '}' {
+    auto ast = new InitValAST2();
+    ast->init_vals = shared_cast<InitValsAST>($2);
+    $$ = ast;
+  }
+  ;
+
+InitVals
+  : InitVal {
+    auto ast = new InitValsAST();
+    ast->init_val = shared_cast<InitValAST>($1);
+    ast->init_vals = nullptr;
+    $$ = ast;
+  }
+  ;
+
+InitVals
+  : InitVal ',' InitVals {
+    auto ast = new InitValsAST();
+    ast->init_val = shared_cast<InitValAST>($1);
+    ast->init_vals = shared_cast<InitValsAST>($3);
     $$ = ast;
   }
   ;
@@ -652,6 +806,35 @@ FuncFParam
     auto ast = new FuncFParamAST();
     ast->btype = shared_cast<BTypeAST>($1);
     ast->ident = *$2;
+    ast->dimen_const_exp_wrap = nullptr;
+    $$ = ast;
+
+    delete $2;
+  }
+  ;
+
+FuncFParam
+  : BType IDENT '[' ']' {
+    auto ast = new FuncFParamAST();
+    ast->btype = shared_cast<BTypeAST>($1);
+    ast->ident = *$2;
+
+    std::shared_ptr<DimenConstExpAST>* ptr = new std::shared_ptr<DimenConstExpAST>(nullptr);
+    ast->dimen_const_exp_wrap = std::shared_ptr<std::shared_ptr<DimenConstExpAST>>(ptr);
+    $$ = ast;
+
+    delete $2;
+  }
+  ;
+
+FuncFParam
+  : BType IDENT '[' ']' DimenConstExp {
+    auto ast = new FuncFParamAST();
+    ast->btype = shared_cast<BTypeAST>($1);
+    ast->ident = *$2;
+    
+    std::shared_ptr<DimenConstExpAST>* ptr = new std::shared_ptr<DimenConstExpAST>(dynamic_cast<DimenConstExpAST*>($5));
+    ast->dimen_const_exp_wrap = std::shared_ptr<std::shared_ptr<DimenConstExpAST>>(ptr);
     $$ = ast;
 
     delete $2;
