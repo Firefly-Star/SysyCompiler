@@ -43,7 +43,7 @@
 
     Exp           ::= LOrExp                                        (ExpAST)
     LVal          ::= IDENT [DimenExp]                              (LValAST)
-    DimenExp      ::= "[" Exp "]" [DimenExp]                          (DimenExpAST) ...
+    DimenExp      ::= "[" Exp "]" [DimenExp]                        (DimenExpAST)
     PrimaryExp    ::= "(" Exp ")"                                   (PrimaryExpAST1)
                     | LVal                                          (PrimaryExpAST3)
                     | Number                                        (PrimaryExpAST2)
