@@ -14,6 +14,7 @@ inline std::shared_ptr<Target> shared_cast(Source* ptr)
 }
 
 class BaseAST;
+class RootAST;
 class CompUnitAST;
 class FuncDefAST;
 class FuncTypeAST;
@@ -42,6 +43,10 @@ class VarDeclAST;
 class VarDefAST;
 class VarDefsAST;
 class InitValAST;
+class FuncFParamsAST;
+class FuncFParamAST;
+class FuncRParamsAST;
+class ExpsAST;
 
 using Stream = std::ofstream;
 class BaseAST
@@ -52,26 +57,52 @@ public:
     virtual void Dump(Stream& stream) const = 0;
 };
 
-// CompUnit ::= FuncDef
+// Root ::= CompUnit
+class RootAST : public BaseAST
+{
+public:
+    std::shared_ptr<CompUnitAST> comp_unit;
+    virtual void Dump(Stream& stream) const override;
+};
+
 class CompUnitAST : public BaseAST
 {
 public:
+    virtual void Dump(Stream& stream) const = 0;
+};
+
+// CompUnit ::= [CompUnit] FuncDef
+class CompUnitAST1 : public CompUnitAST
+{
+public:
+    std::shared_ptr<CompUnitAST> comp_unit;
     std::shared_ptr<FuncDefAST> func_def;
     virtual void Dump(Stream& stream) const override;
 };
 
-// FuncDef ::= FuncType IDENT "(" ")" Block
+// CompUnit ::= [CompUnit] Decl
+class CompUnitAST2 : public CompUnitAST
+{
+public:
+    std::shared_ptr<CompUnitAST> comp_unit;
+    std::shared_ptr<DeclAST> decl;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// FuncDef ::= FuncType IDENT "(" [FuncFParams] ")" Block
 class FuncDefAST : public BaseAST
 {
 public:
-    std::unique_ptr<FuncTypeAST> func_type;
+    std::shared_ptr<FuncTypeAST> func_type;
     std::string ident;
-    std::unique_ptr<BlockAST> block;
+    std::shared_ptr<FuncFParamsAST> func_fparams;
+    std::shared_ptr<BlockAST> block;
 public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// FuncType ::= "int"
+
+// FuncType ::= "int" | "void"
 class FuncTypeAST : public BaseAST
 {
 public:
@@ -79,7 +110,7 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// Block ::= "{" BlockItems "}"
+// Block ::= "{" [BlockItems] "}"
 class BlockAST : public BaseAST
 {
 public:
@@ -93,7 +124,7 @@ public:
     virtual void Dump(Stream& stream) const = 0;
 };
 
-// Stmt ::= "return" Exp ";"
+// Stmt ::= "return" [Exp] ";"
 class StmtAST1 : public StmtAST
 {
 public:
@@ -110,15 +141,8 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// Stmt ::= ";"
+// Stmt ::= [Exp] ";"
 class StmtAST3 : public StmtAST
-{
-public:
-    virtual void Dump(Stream& stream) const override;
-};
-
-// Stmt ::= Exp ";"
-class StmtAST4 : public StmtAST
 {
 public:
     std::shared_ptr<ExpAST> exp;
@@ -126,24 +150,15 @@ public:
 };
 
 // Stmt ::= Block
-class StmtAST5 : public StmtAST
+class StmtAST4 : public StmtAST
 {
 public:
     std::shared_ptr<BlockAST> block;
     virtual void Dump(Stream& stream) const override;
 };
 
-// Stmt ::= "if" "(" Exp ")" Stmt
-class StmtAST6 : public StmtAST
-{
-public:
-    std::shared_ptr<ExpAST> exp;
-    std::shared_ptr<StmtAST> true_stmt;
-    virtual void Dump(Stream& stream) const override;
-};
-
-// Stmt ::= "if" "(" Exp ")" Stmt "else" Stmt
-class StmtAST7 : public StmtAST
+// Stmt ::= "if" "(" Exp ")" Stmt ["else" Stmt]
+class StmtAST5 : public StmtAST
 {
 public:
     std::shared_ptr<ExpAST> exp;
@@ -153,7 +168,7 @@ public:
 };
 
 // Stmt ::= "while" "(" Exp ")" Stmt
-class StmtAST8 : public StmtAST
+class StmtAST6 : public StmtAST
 {
 public:
     std::shared_ptr<ExpAST> exp;
@@ -162,14 +177,14 @@ public:
 };
 
 // Stmt ::= "break" ";"
-class StmtAST9 : public StmtAST
+class StmtAST7 : public StmtAST
 {
 public:
     virtual void Dump(Stream& stream) const override;
 };
 
 // Stmt ::= "continue" ";"
-class StmtAST10 : public StmtAST
+class StmtAST8 : public StmtAST
 {
 public:
     virtual void Dump(Stream& stream) const override;
@@ -205,6 +220,16 @@ class UnaryExpAST2 : public UnaryExpAST
 public:
     std::string op;
     std::shared_ptr<UnaryExpAST> unary_exp;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// UnaryExp ::= IDENT "(" [FuncRParams] ")"
+class UnaryExpAST3 : public UnaryExpAST
+{
+public:
+    std::string ident;
+    std::shared_ptr<FuncRParamsAST> func_rparams;
 
     virtual void Dump(Stream& stream) const override;
 };
@@ -409,7 +434,7 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// Decl ::= ConstDecl | VarDecl
+// Decl ::= VarDecl
 class DeclAST2 : public DeclAST
 {
 public:
@@ -417,12 +442,11 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// ConstDecl ::= "const" BType ConstDef ConstDefs ";"
+// ConstDecl ::= "const" BType ConstDefs  ";"
 class ConstDeclAST : public BaseAST
 {
 public:
     std::shared_ptr<BTypeAST> btype;
-    std::shared_ptr<ConstDefAST> const_def;
     std::shared_ptr<ConstDefsAST> const_defs;
 
     virtual void Dump(Stream& stream) const override;
@@ -446,21 +470,8 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// ConstDefs ::= ConstDef ["," ConstDefs]
 class ConstDefsAST : public BaseAST
-{
-public:
-    virtual void Dump(Stream& stream) const = 0;
-};
-
-// ConstDefs ::= epsilon
-class ConstDefsAST1 : public ConstDefsAST
-{
-public:
-    virtual void Dump(Stream& stream) const override;
-};
-
-// ConstDefs ::= "," ConstDef ConstDefs
-class ConstDefsAST2 : public ConstDeclAST
 {
 public:
     std::shared_ptr<ConstDefAST> const_def;
@@ -499,21 +510,8 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// BlockItems ::= BlockItem [BlockItems]
 class BlockItemsAST : public BaseAST
-{
-public:
-    virtual void Dump(Stream& stream) const = 0;
-};
-
-// BlockItems ::= epsilon
-class BlockItemsAST1 : public BlockItemsAST
-{
-public:
-    virtual void Dump(Stream& stream) const override;
-};
-
-// BlockItems ::= BlockItem BlockItems
-class BlockItemsAST2 : public BlockItemsAST
 {
 public:
     std::shared_ptr<BlockItemAST> block_item;
@@ -538,38 +536,23 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
-// VarDecl ::= BType VarDef VarDefs ";"
+// VarDecl ::= BType VarDefs ";"
 class VarDeclAST : public BaseAST
 {
 public:
     std::shared_ptr<BTypeAST> btype;
-    std::shared_ptr<VarDefAST> var_def;
     std::shared_ptr<VarDefsAST> var_defs;
     virtual void Dump(Stream& stream) const override;
 };
 
+// VarDefs ::= VarDef ["," VarDefs]
 class VarDefsAST : public BaseAST
 {
 public:
-    virtual void Dump(Stream& stream) const = 0;
-};
-
-// VarDefs ::= epsilon
-class VarDefsAST1 : public VarDefsAST
-{
-public:
-    virtual void Dump(Stream& stream) const override;
-};
-
-// VarDefs ::= VarDef VarDefs
-class VarDefsAST2 : public VarDefsAST
-{
-public:
     std::shared_ptr<VarDefAST> var_def;
     std::shared_ptr<VarDefsAST> var_defs;
     virtual void Dump(Stream& stream) const override;
 };
-
 
 class VarDefAST : public BaseAST
 {
@@ -605,3 +588,39 @@ public:
     virtual void Dump(Stream& stream) const override;
 };
 
+// FuncFParams ::= FuncFParam ["," FuncFParams]
+class FuncFParamsAST : public BaseAST
+{
+public:
+    std::shared_ptr<FuncFParamAST> func_fparam;
+    std::shared_ptr<FuncFParamsAST> func_fparams;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// FuncFParam ::= BType IDENT
+class FuncFParamAST : public BaseAST
+{
+public:
+    std::shared_ptr<BTypeAST> btype;
+    std::string ident;
+    virtual void Dump(Stream& stream) const override;
+};
+
+// FuncRParams ::= Exps
+class FuncRParamsAST : public BaseAST
+{
+public:
+    std::shared_ptr<ExpsAST> exps;
+
+    virtual void Dump(Stream& stream) const override;
+};
+
+// Exps ::= Exp ["," Exps]
+class ExpsAST : public BaseAST
+{
+public:
+    std::shared_ptr<ExpAST> exp;
+    std::shared_ptr<ExpsAST> exps;
+
+    virtual void Dump(Stream& stream) const override;
+};

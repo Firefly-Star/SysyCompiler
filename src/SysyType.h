@@ -3,7 +3,7 @@
 enum class SysyType
 {
     None = 0,
-    INT, FLOAT
+    INT, FLOAT, VOID
 };
 
 class NoneType_t

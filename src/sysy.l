@@ -8,8 +8,8 @@
 #include <string>
 #include <iostream>
 
-// ÒòÎª Flex »áÓÃµ½ Bison ÖĞ¹ØÓÚ token µÄ¶¨Òå
-// ËùÒÔĞèÒª include Bison Éú³ÉµÄÍ·ÎÄ¼ş
+// å› ä¸º Flex ä¼šç”¨åˆ° Bison ä¸­å…³äº token çš„å®šä¹‰
+// æ‰€ä»¥éœ€è¦ include Bison ç”Ÿæˆçš„å¤´æ–‡ä»¶
 #include "sysy.tab.hpp"
 
 using namespace std;
@@ -17,16 +17,16 @@ int line_number;
 
 %}
 
-/* ¿Õ°×·ûºÍ×¢ÊÍ */
+/* ç©ºç™½ç¬¦å’Œæ³¨é‡Š */
 WhiteSpace    [ \t\r]*
 EndLine       "\n"
 LineComment   "//".*
 BlockComment  "/*"([^*]|\*+[^/]|"\n")*"*/"
 
-/* ±êÊ¶·û */
+/* æ ‡è¯†ç¬¦ */
 Identifier    [a-zA-Z_][a-zA-Z0-9_]*
 
-/* ÕûÊı×ÖÃæÁ¿ */
+/* æ•´æ•°å­—é¢é‡ */
 Decimal       [1-9][0-9]*
 Octal         0[0-7]*
 Hexadecimal   0[xX][0-9a-fA-F]+
@@ -34,10 +34,10 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 
 %%
 
-{WhiteSpace}    { /* ºöÂÔ, ²»×öÈÎºÎ²Ù×÷ */ }
+{WhiteSpace}    { /* å¿½ç•¥, ä¸åšä»»ä½•æ“ä½œ */ }
 {EndLine}       { ++line_number; }
-{LineComment}   { /* ºöÂÔ, ²»×öÈÎºÎ²Ù×÷ */ }
-{BlockComment}  { /* ºöÂÔ, ²»×öÈÎºÎ²Ù×÷ */ }
+{LineComment}   { /* å¿½ç•¥, ä¸åšä»»ä½•æ“ä½œ */ }
+{BlockComment}  { /* å¿½ç•¥, ä¸åšä»»ä½•æ“ä½œ */ }
 
 "int"           { return INT; }
 "return"        { return RETURN; }
@@ -47,6 +47,7 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 "while"         { return WHILE; }
 "break"         { return BREAK; }
 "continue"      { return CONTINUE; }
+"void"          { return VOID; }
 
 {Identifier}    { yylval.str_val = new std::string(yytext); return IDENT; }
 

@@ -1,40 +1,62 @@
 ### 目前可以识别的产生式:
+    产生式                                                           抽象语法树结点
+    Root          ::= CompUnit                                      (RootAST)
+    CompUnit      ::= [CompUnit] Decl                               (CompUnitAST2)
+                    | [CompUnit] FuncDef                            (CompUnitAST1)
 
-    CompUnit      ::= FuncDef;
+    Decl          ::= ConstDecl                                     (DeclAST1)
+                    | VarDecl                                       (DeclAST2)
+    ConstDecl     ::= "const" BType ConstDefs ";"                   (ConstDeclAST)
+    BType         ::= "int"                                         (BTypeAST)
+    ConstDefs     ::= ConstDef ["," ConstDefs]                      (ConstDefsAST)
+    ConstDef      ::= IDENT "=" ConstInitVal                        (ConstDefAST)
+    ConstInitVal  ::= ConstExp                                      (ConstInitValAST)
+    VarDecl       ::= BType VarDefs ";"                             (VarDeclAST)
+    VarDefs       ::= VarDef ["," VarDefs]                          (VarDefsAST)
+    VarDef        ::= IDENT                                         (VarDefAST1) 
+                    | IDENT "=" InitVal                             (VarDefAST2)
+    InitVal       ::= Exp;                                          (InitValAST)
 
-    Decl          ::= ConstDecl | VarDecl;
-    ConstDecl     ::= "const" BType ConstDef {"," ConstDef} ";";
-    BType         ::= "int";
-    ConstDef      ::= IDENT "=" ConstInitVal;
-    ConstInitVal  ::= ConstExp;
-    VarDecl       ::= BType VarDef {"," VarDef} ";";
-    VarDef        ::= IDENT | IDENT "=" InitVal;
-    InitVal       ::= Exp;
+    FuncDef       ::= FuncType IDENT "(" [FuncFParams] ")" Block    (FuncDefAST)
+    FuncType      ::= "void" | "int"                                (FuncTypeAST)
+    FuncFParams   ::= FuncFParam ["," FuncFParams]                  (FuncFParamsAST)
+    FuncFParam    ::= BType IDENT;                                  (FuncFParamAST)
 
-    FuncDef       ::= FuncType IDENT "(" ")" Block;
-    FuncType      ::= "int";
+    Block         ::= "{" [BlockItems] "}"                          (BlockAST)
+    BlockItems    ::= BlockItem [BlockItems]                        (BlockItemsAST)
+    BlockItem     ::= Decl                                          (BlockItemAST1) 
+                    | Stmt                                          (BlockItemAST2)
+    Stmt          ::= LVal "=" Exp ";"                              (StmtAST2)
+                    | [Exp] ";"                                     (StmtAST3)
+                    | Block                                         (StmtAST4)
+                    | "if" "(" Exp ")" Stmt ["else" Stmt]           (StmtAST5)
+                    | "while" "(" Exp ")" Stmt                      (StmtAST6)
+                    | "break" ";"                                   (StmtAST7)
+                    | "continue" ";"                                (StmtAST8)
+                    | "return" [Exp] ";"                            (StmtAST1)
 
-    Block         ::= "{" {BlockItem} "}";
-    BlockItem     ::= Decl | Stmt;
-    Stmt          ::= LVal "=" Exp ";"
-                    | [Exp] ";"
-                    | Block
-                    | "if" "(" Exp ")" Stmt ["else" Stmt]
-                    | "while" "(" Exp ")" Stmt
-                    | "break" ";"
-                    | "continue" ";"
-                    | "return" [Exp] ";";
-
-    Exp           ::= LOrExp;
-    LVal          ::= IDENT;
-    PrimaryExp    ::= "(" Exp ")" | LVal | Number;
+    Exp           ::= LOrExp                                        (ExpAST)
+    LVal          ::= IDENT                                         (LValAST)
+    PrimaryExp    ::= "(" Exp ")"                                   (PrimaryExpAST1)
+                    | LVal                                          (PrimaryExpAST3)
+                    | Number                                        (PrimaryExpAST2)
     Number        ::= INT_CONST;
-    UnaryExp      ::= PrimaryExp | UnaryOp UnaryExp;
+    UnaryExp      ::= PrimaryExp                                    (UnaryExpAST1)
+                    | IDENT "(" [FuncRParams] ")"                   (UnaryExpAST3)
+                    | UnaryOp UnaryExp                              (UnaryExpAST2)
     UnaryOp       ::= "+" | "-" | "!";
-    MulExp        ::= UnaryExp | MulExp ("*" | "/" | "%") UnaryExp;
-    AddExp        ::= MulExp | AddExp ("+" | "-") MulExp;
-    RelExp        ::= AddExp | RelExp ("<" | ">" | "<=" | ">=") AddExp;
-    EqExp         ::= RelExp | EqExp ("==" | "!=") RelExp;
-    LAndExp       ::= EqExp | LAndExp "&&" EqExp;
-    LOrExp        ::= LAndExp | LOrExp "||" LAndExp;
-    ConstExp      ::= Exp;
+    FuncRParams   ::= Exps;                                         (FuncRParamsAST)
+    Exps          ::= Exp ["," Exps]                                (ExpsAST)
+    MulExp        ::= UnaryExp                                      (MulExpAST1)
+                    | MulExp ("*" | "/" | "%") UnaryExp             (MulExpAST2)
+    AddExp        ::= MulExp                                        (AddExpAST1)
+                    | AddExp ("+" | "-") MulExp                     (AddExpAST2)
+    RelExp        ::= AddExp                                        (RelExpAST1) 
+                    | RelExp ("<" | ">" | "<=" | ">=") AddExp       (RelExpAST2)
+    EqExp         ::= RelExp                                        (EqExpAST1) 
+                    | EqExp ("==" | "!=") RelExp                    (EqExpAST2)
+    LAndExp       ::= EqExp                                         (LAndExpAST1) 
+                    | LAndExp "&&" EqExp                            (LAndExpAST2)
+    LOrExp        ::= LAndExp                                       (LOrExpAST1)
+                    | LOrExp "||" LAndExp                           (LOrExpAST2)
+    ConstExp      ::= Exp;                                          (ConstExpAST)
