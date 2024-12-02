@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include "AST.h"
 
@@ -14,33 +15,75 @@ using namespace std;
 // 你的代码编辑器/IDE 很可能找不到这个文件, 然后会给你报错 (虽然编译不会出错)
 // 看起来会很烦人, 于是干脆采用这种看起来 dirty 但实际很有效的手段
 extern FILE *yyin;
+extern std::stringstream lexOutss;
 extern int yyparse(unique_ptr<RootAST> &ast);
 
 int main(int argc, const char *argv[]) {
-  // 解析命令行参数. 测试脚本/评测平台要求你的编译器能接收如下参数:
-  // compiler 模式 输入文件 -o 输出文件
-  assert(argc == 5);
-  auto mode = argv[1];
-  auto input = argv[2];
-  auto output = argv[4];
+    std::vector<std::ofstream> lexOutFiles;
+    std::vector<std::ofstream> syntaxOutFiles;
 
-  // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
-  yyin = fopen(input, "r");
-  assert(yyin);
+    // compiler 输入文件 { 模式 输出文件 }
+    assert(((argc % 2) == 0) && argc >= 4);
 
-  // 调用 parser 函数, parser 函数会进一步调用 lexer 解析输入文件的
-  unique_ptr<RootAST> ast;
-  auto ret = yyparse(ast);
-  assert(!ret);
+    auto input = argv[1];
+    
+    for (int i = 0;i < (argc - 2) / 2; ++i)
+    {
+        std::string mode = argv[i * 2 + 2];
+        auto output = argv[i * 2 + 3];
+        ofstream outFile(output);
+        if (!outFile.is_open())
+        {
+            std::cout << "无法打开文件: " << output << "\n";
+            return -1;
+        }
+        else
+        {
+            if (mode == "-l") // 词法分析输出
+            {
+                lexOutFiles.push_back(std::move(outFile));
+            }
+            else if (mode == "-s") // 抽象语法树输出 
+            {
+                syntaxOutFiles.push_back(std::move(outFile));
+            }
+            // TODO: 
+            // 中间代码输出
+            // riscv汇编代码输出
+            else
+            {
+                std::cout << "未知的模式: " << mode << "\n";
+                return -1;
+            }
+        }
+    }
+    yyin = fopen(input, "r");
 
-  ofstream outFile(output);
-  if (!outFile.is_open())
-  {
-    std::cout << "无法打开文件: " << output << "\n";
-    return -1;
-  }
+    // 打开输入文件, 并且指定 lexer 在解析的时候读取这个文件
+    assert(yyin);
 
-  // 输出解析得到的 AST, 其实就是个字符串
-  ast->Dump(outFile);
-  return 0;
+    // 调用 parser 函数, parser 函数会进一步调用 lexer 解析输入文件的
+    unique_ptr<RootAST> ast;
+    auto ret = yyparse(ast);
+    if (ret)
+    {
+        std::cout << "\n语法分析失败\n";
+        return ret;
+    }
+
+    for (auto& lexOutFile : lexOutFiles)
+    {
+        lexOutFile << lexOutss.str();
+    }
+
+    std::stringstream ss;
+    std::string name = "rootnode";
+    ss << "digraph Tree {\n";
+    ast->Print(ss, name);
+    ss << "}";
+    std::string syntaxOutstr = ss.str();
+    for (auto& syntaxOutFile : syntaxOutFiles)
+    {
+        syntaxOutFile << syntaxOutstr;
+    }
 }

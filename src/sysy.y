@@ -14,6 +14,8 @@
 int yylex();
 void yyerror(std::unique_ptr<RootAST>& ast_root, const char* s);
 
+extern int line_number;
+
 using namespace std;
 
 %}
@@ -868,7 +870,9 @@ Exps
 
 %%
 
-void yyerror(unique_ptr<RootAST>& ast_root, const char* s)
+void yyerror(std::unique_ptr<RootAST>& ast_root, const char* s)
 {
-    std::cerr << "error: " << s << std::endl;
+    std::cerr << "Error type [" << s 
+              << "] at line [" << line_number 
+              << "] : " << "说明信息不做要求，等到语义检查中再做补充" << std::endl;
 }

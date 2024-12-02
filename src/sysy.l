@@ -7,13 +7,16 @@
 #include <cstdlib>
 #include <string>
 #include <iostream>
+#include <vector>
+#include <sstream>
 
 // 因为 Flex 会用到 Bison 中关于 token 的定义
 // 所以需要 include Bison 生成的头文件
 #include "sysy.tab.hpp"
 
 using namespace std;
-int line_number;
+int line_number = 1;
+std::stringstream lexOutss;
 
 %}
 
@@ -31,30 +34,29 @@ Decimal       [1-9][0-9]*
 Octal         0[0-7]*
 Hexadecimal   0[xX][0-9a-fA-F]+
 
-
 %%
 
-{WhiteSpace}    { /* 忽略, 不做任何操作 */ }
-{EndLine}       { ++line_number; }
-{LineComment}   { /* 忽略, 不做任何操作 */ }
-{BlockComment}  { /* 忽略, 不做任何操作 */ }
+{WhiteSpace}    { lexOutss << "<WhiteSpace, >\n";                               /* 忽略, 不做任何操作 */ }
+{EndLine}       { lexOutss << "<EndLine, >\n";                                  ++line_number; }
+{LineComment}   { lexOutss << "<LineComment, " << yytext << ">\n";              /* 忽略, 不做任何操作 */ }
+{BlockComment}  { lexOutss << "<BlockComment, " << yytext << ">\n";             /* 忽略, 不做任何操作 */ }
 
-"int"           { return INT; }
-"return"        { return RETURN; }
-"const"         { return CONST; }
-"if"            { return IF; }
-"else"          { return ELSE; }
-"while"         { return WHILE; }
-"break"         { return BREAK; }
-"continue"      { return CONTINUE; }
-"void"          { return VOID; }
+"int"           { lexOutss << "<INT, int>\n";                                   return INT; }
+"return"        { lexOutss << "<RETURN, return>\n";                             return RETURN; }
+"const"         { lexOutss << "<CONST, const>\n";                               return CONST; }
+"if"            { lexOutss << "<IF, if>\n";                                     return IF; }
+"else"          { lexOutss << "<ELSE, else>\n";                                 return ELSE; }
+"while"         { lexOutss << "<WHILE, while>\n";                               return WHILE; }
+"break"         { lexOutss << "<BREAK, break>\n";                               return BREAK; }
+"continue"      { lexOutss << "<CONTINUE, continue>\n";                         return CONTINUE; }
+"void"          { lexOutss << "<VOID, voidint>\n";                              return VOID; }
 
-{Identifier}    { yylval.str_val = new std::string(yytext); return IDENT; }
+{Identifier}    { lexOutss << "<Identifier, " << yytext << ">\n";               yylval.str_val = new std::string(yytext); return IDENT; }
 
-{Decimal}       { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
-{Octal}         { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
-{Hexadecimal}   { yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
+{Decimal}       { lexOutss << "<Decimal, " << yytext << ">\n";                  yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
+{Octal}         { lexOutss << "<Octal, " << yytext << ">\n";                    yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
+{Hexadecimal}   { lexOutss << "<Hexadecimal, " << yytext << ">\n";              yylval.int_val = strtol(yytext, nullptr, 0); return INT_CONST; }
 
-.               { return yytext[0]; }
+.               { lexOutss << "<UnkownToken, " << yytext << ">\n";              return yytext[0]; }
 
 %%
