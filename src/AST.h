@@ -662,7 +662,7 @@ public:
     std::string ident;
     std::shared_ptr<DimenConstExpAST> dimen_const_exp;
 
-    std::shared_ptr<VarDefAST> init_val;
+    std::shared_ptr<InitValAST> init_val;
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;

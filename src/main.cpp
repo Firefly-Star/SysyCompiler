@@ -78,9 +78,7 @@ int main(int argc, const char *argv[]) {
 
     std::stringstream ss;
     std::string name = "rootnode";
-    ss << "digraph Tree {\n";
     ast->Print(ss, name);
-    ss << "}";
     std::string syntaxOutstr = ss.str();
     for (auto& syntaxOutFile : syntaxOutFiles)
     {

@@ -709,7 +709,7 @@ void VarDefAST2::Dump(std::ofstream& stream) const
 // VarDef ::= IDENT [DimenConstExp] "=" InitVal
 void VarDefAST2::Print(std::stringstream& stream, std::string& name) const
 {
-    stream << name << " [label=\"VarDef2\"];\n";  // 创建父节点 "VarDef2"
+    stream << name << " [label=\"VarDef\"];\n";  // 创建父节点 "VarDef2"
 
     // 创建标识符的子节点
     std::string identNode = GenName();
@@ -961,31 +961,21 @@ void UnaryExpAST3::Print(std::stringstream& stream, std::string& name) const
     stream << name << " -> " << identNode << ";\n";  
     stream << identNode << " [label=\"" << ident << "\"];\n";  // 创建标识符节点
 
+    std::string openParenNode = GenName();
+    stream << name << " -> " << openParenNode << ";\n";  
+    stream << openParenNode << " [label=\"(\"];\n";  // 创建左括号
+
     // 如果有参数，连接参数节点
     if (func_rparams)
     {
         std::string paramsNode = GenName();
         stream << name << " -> " << paramsNode << ";\n";  
-        paramsNode = GenName();
-        stream << paramsNode << " [label=\"(\"];\n";  // 创建左括号
-
         func_rparams->Print(stream, paramsNode);  // 递归打印函数参数
-
-        std::string closeParenNode = GenName();
-        stream << name << " -> " << closeParenNode << ";\n";  
-        stream << closeParenNode << " [label=\")\"];\n";  // 创建右括号
     }
-    else
-    {
-        // 表示没有参数的情况
-        std::string openParenNode = GenName();
-        std::string closeParenNode = GenName();
-        stream << name << " -> " << openParenNode << ";\n";  
-        stream << openParenNode << " [label=\"(\"];\n";  // 创建左括号
         
-        stream << name << " -> " << closeParenNode << ";\n";  
-        stream << closeParenNode << " [label=\")\"];\n";  // 创建右括号
-    }
+    std::string closeParenNode = GenName();
+    stream << name << " -> " << closeParenNode << ";\n";  
+    stream << closeParenNode << " [label=\")\"];\n";  // 创建右括号
 }
 
 void FuncFParamAST::Dump(std::ofstream& stream) const
@@ -1245,10 +1235,12 @@ void RootAST::Dump(std::ofstream& stream) const
 // Root ::= CompUnit
 void RootAST::Print(std::stringstream& stream, std::string& name) const
 {
+    stream << "digraph Tree {\n";
     stream << name << " [label=\"Root\"];\n";
     std::string name1 = GenName();
     stream << name << " -> " << name1 << ";\n";
     comp_unit->Print(stream, name1);
+    stream << "}";
 }
 
 void ExpsAST::Dump(std::ofstream& stream) const

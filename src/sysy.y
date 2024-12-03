@@ -724,7 +724,7 @@ VarDef
     auto ast = new VarDefAST2();
     ast->ident = *$1;
     ast->dimen_const_exp = nullptr;
-    ast->init_val = shared_cast<VarDefAST>($3);
+    ast->init_val = shared_cast<InitValAST>($3);
     $$ = ast;
 
     delete $1;
@@ -736,7 +736,7 @@ VarDef
     auto ast = new VarDefAST2();
     ast->ident = *$1;
     ast->dimen_const_exp = shared_cast<DimenConstExpAST>($2);
-    ast->init_val = shared_cast<VarDefAST>($4);
+    ast->init_val = shared_cast<InitValAST>($4);
     $$ = ast;
 
     delete $1;
