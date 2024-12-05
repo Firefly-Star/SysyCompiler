@@ -42,6 +42,7 @@ Hexadecimal   0[xX][0-9a-fA-F]+
 {BlockComment}  { lexOutss << "<BlockComment, " << yytext << ">\n";             /* 忽略, 不做任何操作 */ }
 
 "int"           { lexOutss << "<INT, int>\n";                                   return INT; }
+"float"         { lexOutss << "<FLOAT, float>\n";                               return FLOAT; }
 "return"        { lexOutss << "<RETURN, return>\n";                             return RETURN; }
 "const"         { lexOutss << "<CONST, const>\n";                               return CONST; }
 "if"            { lexOutss << "<IF, if>\n";                                     return IF; }

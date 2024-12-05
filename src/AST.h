@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -53,28 +54,52 @@ class ConstInitValsAST;
 class InitValsAST;
 class DimenExpAST;
 
+class FDef_VDeclAST;
+class FDef_VDeclSuffixAST;
+class FVTypeAST;
+
 using Stream = std::ofstream;
+struct VariableInfo
+{
+SysyType type;
+std::vector<int> dimen;
+};
+
+struct FuncInfo
+{
+SysyType returnType;
+std::vector<VariableInfo> paramType;
+};
 class BaseAST
 {
 public:
+    int line;
+
     virtual ~BaseAST() = default;
 
     virtual void Dump(std::ofstream& stream) const = 0;
     virtual void Print(std::stringstream& stream, std::string& name) const = 0;
+    virtual bool SematicCheck(){ return true; }
+    virtual void Error(std::string description){
+        std::cout << "Error type[Semetic error] at line " << line << ": " << description << "\n";
+    }
 };
 
 // Root ::= CompUnit
 class RootAST : public BaseAST
 {
 public:
+    bool result = true;
     std::shared_ptr<CompUnitAST> comp_unit;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 class CompUnitAST : public BaseAST
 {
 public:
+    std::unordered_map<std::string, VariableInfo> variables;
     virtual void Dump(std::ofstream& stream) const = 0;
     virtual void Print(std::stringstream& stream, std::string& name) const = 0;
 };
@@ -87,16 +112,29 @@ public:
     std::shared_ptr<FuncDefAST> func_def;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
-// CompUnit ::= [CompUnit] Decl
+// CompUnit ::= [CompUnit] ConstDecl
 class CompUnitAST2 : public CompUnitAST
 {
 public:
     std::shared_ptr<CompUnitAST> comp_unit;
-    std::shared_ptr<DeclAST> decl;
+    std::shared_ptr<ConstDeclAST> const_decl;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
+};
+
+// CompUnit ::= [CompUnit] FDef_VDecl
+class CompUnitAST3 : public CompUnitAST
+{
+public:
+    std::shared_ptr<CompUnitAST> comp_unit;
+    std::shared_ptr<FDef_VDeclAST> fdef_vdecl;
+    virtual void Dump(std::ofstream& stream) const override;
+    virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // FuncDef ::= FuncType IDENT "(" [FuncFParams] ")" Block
@@ -110,6 +148,7 @@ public:
 public:
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 
@@ -120,6 +159,7 @@ public:
     SysyType type;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // Block ::= "{" [BlockItems] "}"
@@ -129,6 +169,8 @@ public:
     std::shared_ptr<BlockItemsAST> block_items;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class StmtAST : public BaseAST
@@ -145,6 +187,7 @@ public:
     std::shared_ptr<ExpAST> exp;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // Stmt ::= LVal "=" Exp ";"
@@ -155,6 +198,8 @@ public:
     std::shared_ptr<ExpAST> exp;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // Stmt ::= [Exp] ";"
@@ -164,6 +209,8 @@ public:
     std::shared_ptr<ExpAST> exp;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // Stmt ::= Block
@@ -173,6 +220,8 @@ public:
     std::shared_ptr<BlockAST> block;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // Stmt ::= "if" "(" Exp ")" Stmt ["else" Stmt]
@@ -184,6 +233,7 @@ public:
     std::shared_ptr<StmtAST> false_stmt;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // Stmt ::= "while" "(" Exp ")" Stmt
@@ -194,6 +244,7 @@ public:
     std::shared_ptr<StmtAST> stmt;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // Stmt ::= "break" ";"
@@ -202,6 +253,7 @@ class StmtAST7 : public StmtAST
 public:
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // Stmt ::= "continue" ";"
@@ -210,6 +262,7 @@ class StmtAST8 : public StmtAST
 public:
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // Exp ::= LOrExp
@@ -220,6 +273,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class UnaryExpAST : public BaseAST
@@ -237,6 +292,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // UnaryExp ::= UnaryOp UnaryExp
@@ -248,6 +304,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // UnaryExp ::= IDENT "(" [FuncRParams] ")"
@@ -259,6 +316,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class PrimaryExpAST : public BaseAST
@@ -276,6 +335,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // PrimaryExp  ::= Number
@@ -286,6 +346,7 @@ public:
     
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // PrimaryExp ::= LVal
@@ -295,6 +356,7 @@ public:
     std::shared_ptr<LValAST> lval;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 class AddExpAST : public BaseAST
@@ -312,6 +374,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // AddExp ::= AddExp ("+" | "-") MulExp
@@ -324,6 +387,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class MulExpAST : public BaseAST
@@ -341,6 +406,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // MulExp ::= MulExp ("*" | "/" | "%") UnaryExp
@@ -353,6 +420,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class LOrExpAST : public BaseAST
@@ -370,6 +439,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
+    
 };
 
 // LOrExp ::= LOrExp "||" LAndExp
@@ -381,6 +452,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
+    
 };
 
 class LAndExpAST : public BaseAST
@@ -398,6 +471,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // LAndExp ::= LAndExp "&&" EqExp
@@ -409,6 +484,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class EqExpAST : public BaseAST
@@ -426,6 +503,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // EqExp ::= EqExp ("==" | "!=") RelExp
@@ -438,6 +517,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class RelExpAST : public BaseAST
@@ -455,6 +536,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // RelExp ::= RelExp ("<" | ">" | "<=" | ">=") AddExp
@@ -467,6 +550,8 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 class DeclAST : public BaseAST
@@ -483,6 +568,7 @@ public:
     std::shared_ptr<ConstDeclAST> const_decl;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // Decl ::= VarDecl
@@ -492,6 +578,7 @@ public:
     std::shared_ptr<VarDeclAST> var_decl;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // ConstDecl ::= "const" BType ConstDefs ";"
@@ -500,9 +587,10 @@ class ConstDeclAST : public BaseAST
 public:
     std::shared_ptr<BTypeAST> btype;
     std::shared_ptr<ConstDefsAST> const_defs;
-
+    std::unordered_map<std::string, VariableInfo> variables;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // BType ::= "int"
@@ -512,6 +600,7 @@ public:
     SysyType type = SysyType::INT;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // ConstDef ::= IDENT [DimenConstExp] "=" ConstInitVal
@@ -522,8 +611,11 @@ public:
     std::shared_ptr<DimenConstExpAST> dimen_const_exp;
     std::shared_ptr<ConstInitValAST> const_init_val;
     
+    VariableInfo variableinfo;
+
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    bool SematicCheck(SysyType type);
 };
 
 // ConstDefs ::= ConstDef ["," ConstDefs]
@@ -533,8 +625,10 @@ public:
     std::shared_ptr<ConstDefAST> const_def;
     std::shared_ptr<ConstDefsAST> const_defs;
 
+    std::unordered_map<std::string, VariableInfo> variables;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    bool SematicCheck(SysyType type);
 };
 
 class ConstInitValAST : public BaseAST
@@ -551,6 +645,7 @@ public:
     std::shared_ptr<ConstExpAST> const_exp;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // ConstInitVal ::= "{" [ConstInitVals] "}"
@@ -560,6 +655,7 @@ public:
     std::shared_ptr<ConstInitValsAST> const_init_vals;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 class BlockItemAST : public BaseAST
@@ -576,6 +672,7 @@ public:
     std::shared_ptr<DeclAST> decl;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // BlockItem ::= Stmt
@@ -585,6 +682,7 @@ public:
     std::shared_ptr<StmtAST> stmt;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // BlockItems ::= BlockItem [BlockItems]
@@ -596,6 +694,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // LVal ::= IDENT [DimenExp]
@@ -606,6 +705,7 @@ public:
     std::shared_ptr<DimenExpAST> dimen_exp;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // ConstExp ::= Exp
@@ -615,6 +715,7 @@ public:
     std::shared_ptr<ExpAST> exp;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // VarDecl ::= BType VarDefs ";"
@@ -625,6 +726,8 @@ public:
     std::shared_ptr<VarDefsAST> var_defs;
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // VarDefs ::= VarDef ["," VarDefs]
@@ -633,24 +736,29 @@ class VarDefsAST : public BaseAST
 public:
     std::shared_ptr<VarDefAST> var_def;
     std::shared_ptr<VarDefsAST> var_defs;
+
+    std::unordered_map<std::string, VariableInfo> variables;
+
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    bool SematicCheck(SysyType type);
 };
 
 class VarDefAST : public BaseAST
 {
 public:
+    std::string ident;
+    VariableInfo info;
+    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
     virtual void Dump(std::ofstream& stream) const = 0;
     virtual void Print(std::stringstream& stream, std::string& name) const = 0;
+    bool SematicCheck(SysyType type);
 };
 
 // VarDef ::= IDENT [DimenConstExp]
 class VarDefAST1 : public VarDefAST
 {
 public:
-    std::string ident;
-    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
-
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
 };
@@ -659,13 +767,11 @@ public:
 class VarDefAST2 : public VarDefAST
 {
 public:
-    std::string ident;
-    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
-
     std::shared_ptr<InitValAST> init_val;
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 class InitValAST : public BaseAST
@@ -685,6 +791,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // InitVal ::= "{" [InitVals] "}"
@@ -695,6 +802,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // FuncFParams ::= FuncFParam ["," FuncFParams]
@@ -703,8 +811,12 @@ class FuncFParamsAST : public BaseAST
 public:
     std::shared_ptr<FuncFParamAST> func_fparam;
     std::shared_ptr<FuncFParamsAST> func_fparams;
+
+    std::vector<VariableInfo> variables;
+
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };
 
 // FuncFParam ::= BType IDENT ["[" "]" [DimenConstExp]]
@@ -714,8 +826,13 @@ public:
     std::shared_ptr<BTypeAST> btype;
     std::string ident;
     std::shared_ptr<std::shared_ptr<DimenConstExpAST>> dimen_const_exp_wrap;
+
+    VariableInfo info; 
+
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+    virtual bool SematicCheck() override;
 };
 
 // FuncRParams ::= Exps
@@ -726,6 +843,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // Exps ::= Exp ["," Exps]
@@ -737,6 +855,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // DimenConstExp ::= "[" ConstExp "]" [DimenConstExp]
@@ -746,8 +865,11 @@ public:
     std::shared_ptr<ConstExpAST> const_exp;
     std::shared_ptr<DimenConstExpAST> dimen_const_exp;
 
+    std::vector<int> dimen;
+
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // ConstInitVals ::= ConstInitVal ["," ConstInitVals]
@@ -759,6 +881,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 
@@ -771,6 +894,7 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
 };
 
 // DimenExp ::= "[" Exp "]" [DimenExp]
@@ -782,4 +906,64 @@ public:
 
     virtual void Dump(std::ofstream& stream) const override;
     virtual void Print(std::stringstream& stream, std::string& name) const override;
+    
+};
+
+// FDef_VDecl ::= FVType IDENT FDef_VDeclSuffix
+class FDef_VDeclAST : public BaseAST
+{
+public:
+    std::shared_ptr<FVTypeAST> fvtype;
+    std::string ident;
+    std::shared_ptr<FDef_VDeclSuffixAST> fdef_vdecl_suffix;
+
+    std::unordered_map<std::string, VariableInfo> variables;
+
+    virtual void Dump(std::ofstream& stream) const override;
+    virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
+};
+
+class FVTypeAST : public BaseAST
+{
+public:
+    SysyType type;
+
+    virtual void Dump(std::ofstream& stream) const override;
+    virtual void Print(std::stringstream& stream, std::string& name) const override;
+};
+
+class FDef_VDeclSuffixAST : public BaseAST
+{
+public:
+    virtual void Dump(std::ofstream& stream) const = 0;
+    virtual void Print(std::stringstream& stream, std::string& name) const = 0;
+};
+
+// FDef_VDeclSuffix ::= [DimenConstExp] ["=" InitVal] ["," VarDefs] ";"
+class FDef_VDeclSuffixAST1 : public FDef_VDeclSuffixAST
+{
+public:
+    std::shared_ptr<DimenConstExpAST> dimen_const_exp;
+    std::shared_ptr<InitValAST> init_val;
+    std::shared_ptr<VarDefsAST> var_defs;
+
+    std::unordered_map<std::string, VariableInfo> variables;
+
+    virtual void Dump(std::ofstream& stream) const override;
+    virtual void Print(std::stringstream& stream, std::string& name) const override;
+    bool SematicCheck(SysyType type);
+};
+
+
+// FDef_VDeclSuffix ::= "(" [FuncFParams] ")" Block 
+class FDef_VDeclSuffixAST2 : public FDef_VDeclSuffixAST
+{
+public:
+    std::shared_ptr<FuncFParamsAST> func_fparams;
+    std::shared_ptr<BlockAST> block;
+    std::vector<VariableInfo> variables;
+    virtual void Dump(std::ofstream& stream) const override;
+    virtual void Print(std::stringstream& stream, std::string& name) const override;
+    virtual bool SematicCheck() override;
 };

@@ -1,13 +1,21 @@
 ### 目前可以识别的产生式:
     产生式                                                           抽象语法树结点
     Root          ::= CompUnit                                      (RootAST)
-    CompUnit      ::= [CompUnit] Decl                               (CompUnitAST2)
+    CompUnit      ::= [CompUnit] ConstDecl                          (CompUnitAST2)
                     | [CompUnit] FuncDef                            (CompUnitAST1)
+                    | [CompUnit] FDef_VDecl                         (CompUnitAST3)
+
+    FDef_VDecl    ::= FVType IDENT FDef_VDeclSuffix                 (FDef_VDeclAST)
+    FDef_VDeclSuffix
+                  ::= [DimenConstExp] ["=" InitVal] ["," VarDefs] ";" (FDef_VDeclSuffixAST1)
+                    | "(" [FuncFParams] ")" Block                     (FDef_VDeclAST2)
+
+    FVType        ::= "int" | "float"
 
     Decl          ::= ConstDecl                                     (DeclAST1)
                     | VarDecl                                       (DeclAST2)
     ConstDecl     ::= "const" BType ConstDefs ";"                   (ConstDeclAST)
-    BType         ::= "int"                                         (BTypeAST)
+    BType         ::= "int" |"float"                                (BTypeAST)
     ConstDefs     ::= ConstDef ["," ConstDefs]                      (ConstDefsAST)
     ConstDef      ::= IDENT [DimenConstExp] "=" ConstInitVal        (ConstDefAST)
     DimenConstExp ::= "[" ConstExp "]" [DimenConstExp]              (DimenConstExpAST)
@@ -24,7 +32,7 @@
     InitVals      ::= InitVal ["," InitVals]                        (InitValsAST)
 
     FuncDef       ::= FuncType IDENT "(" [FuncFParams] ")" Block    (FuncDefAST)
-    FuncType      ::= "void" | "int"                                (FuncTypeAST)
+    FuncType      ::= "void"                                        (FuncTypeAST)
     FuncFParams   ::= FuncFParam ["," FuncFParams]                  (FuncFParamsAST)
     FuncFParam ::= BType IDENT ["[" "]" [DimenConstExp]]            (FuncFParamAST)
 

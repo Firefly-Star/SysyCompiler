@@ -68,3 +68,44 @@ make
 ./build/compiler o hello.c o hello
 ./build/compiler o hello.c o hello
 exit
+make
+./build/compiler o hello.c o hello
+./build/compiler hello.c -l hello.l
+./build/compiler hello.c -l hello.l
+make
+make
+make
+./build/compiler hello.c -l hello.l
+./build/compiler hello.c -l hello.l
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+make
+./build/compiler hello.c -l hello.l -s hello.s
+make
+make
+./build/compiler hello.c -l hello.l -s hello.s
+make
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+make
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+make
+./build/compiler hello.c -l hello.l -s hello.s
+make
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+./build/compiler hello.c -l hello.l -s hello.s
+make
+make
+./build/compiler hello.c -l hello.l -s hello.s
+make
+./build/compiler hello.c -l hello.l -s hello.s
+make
+make
+./build/compiler hello.c -l hello.l -s hello.s

@@ -1,4 +1,4 @@
-int main()
-{
-    x(10,20);
+int main(){
+    a();
 }
+const int a = 0;

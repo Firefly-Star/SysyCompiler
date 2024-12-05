@@ -64,16 +64,23 @@ int main(int argc, const char *argv[]) {
 
     // 调用 parser 函数, parser 函数会进一步调用 lexer 解析输入文件的
     unique_ptr<RootAST> ast;
-    auto ret = yyparse(ast);
-    if (ret)
+    bool result;
+    yyparse(ast);
+    
+    if (!ast || !ast->result)
     {
-        std::cout << "\n语法分析失败\n";
-        return ret;
+        std::cout << "语法分析失败\n";
+        return 1;
     }
 
     for (auto& lexOutFile : lexOutFiles)
     {
         lexOutFile << lexOutss.str();
+    }
+
+    if (ast->SematicCheck())
+    {
+        return -1;
     }
 
     std::stringstream ss;
@@ -84,4 +91,5 @@ int main(int argc, const char *argv[]) {
     {
         syntaxOutFile << syntaxOutstr;
     }
+    return 0;
 }

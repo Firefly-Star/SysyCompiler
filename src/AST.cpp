@@ -1,6 +1,13 @@
 #include "AST.h"
+#include <unordered_map>
+#include <vector>
 
 int nodeNumber = 0;
+
+
+
+std::unordered_map<std::string, FuncInfo> funcTable;
+
 
 std::string GenName()
 {
@@ -22,9 +29,10 @@ void FuncTypeAST::Print(std::stringstream& stream, std::string& name) const
     std::string typeName;
     switch(type)
     {
-        case SysyType::INT: typeName = "int"; break; 
+        case SysyType::INT: typeName = "int"; break;
+        case SysyType::FLOAT: typeName = "float"; break;
         case SysyType::VOID: typeName = "void"; break;
-        default: typeName = "unknown"; 
+        default: typeName = "unknown"; break;
     }
     stream << name << " -> " << name1 << ";\n";
     stream << name1 << " [label=\"" << typeName << "\"];\n";
@@ -51,6 +59,15 @@ void BlockAST::Print(std::stringstream& stream, std::string& name) const
     stream << blockEnd << " [label=\"}\"];\n";  // 结束符号
 }
 
+bool BlockAST::SematicCheck()
+{
+    if (block_items)
+    {
+        return block_items->SematicCheck();
+    }
+    return true;
+}
+
 void BlockAST::Dump(std::ofstream& stream) const
 {
 }
@@ -70,6 +87,11 @@ void ExpAST::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << lOrExpNode << ";\n";  // 连接 "Exp" 到 "LOrExp"
         l_or_exp->Print(stream, lOrExpNode);  // 递归打印 LOrExp
     }
+}
+
+bool ExpAST::SematicCheck()
+{
+    return l_or_exp->SematicCheck();
 }
 
 void UnaryExpAST1::Dump(std::ofstream& stream) const
@@ -156,6 +178,11 @@ void AddExpAST1::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool AddExpAST1::SematicCheck()
+{
+    return mul_exp->SematicCheck();
+}
+
 // AddExp ::= AddExp ("+" | "-") MulExp
 void AddExpAST2::Print(std::stringstream& stream, std::string& name) const
 {
@@ -179,6 +206,11 @@ void AddExpAST2::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << rightMulExpNode << ";\n";  // 连接 "AddExp" 到右侧 MulExp
         mul_exp->Print(stream, rightMulExpNode);  // 递归打印乘法表达式
     }
+}
+
+bool AddExpAST2::SematicCheck()
+{
+    return mul_exp->SematicCheck();
 }
 
 // PrimaryExp  ::= Number
@@ -217,6 +249,11 @@ void MulExpAST1::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool MulExpAST1::SematicCheck()
+{
+    return unary_exp->SematicCheck();
+}
+
 void MulExpAST2::Dump(std::ofstream& stream) const
 {
 }
@@ -246,6 +283,11 @@ void MulExpAST2::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool MulExpAST2::SematicCheck()
+{
+    return unary_exp->SematicCheck();
+}
+
 void LOrExpAST1::Dump(std::ofstream& stream) const
 {
 }
@@ -261,6 +303,11 @@ void LOrExpAST1::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << lAndExpNode << ";\n";  // 连接 "LOrExp" 到 "LAndExp"
         l_and_exp->Print(stream, lAndExpNode);  // 递归打印逻辑与表达式
     }
+}
+
+bool LOrExpAST1::SematicCheck()
+{
+    return l_and_exp->SematicCheck();
 }
 
 void LOrExpAST2::Dump(std::ofstream& stream) const
@@ -292,6 +339,11 @@ void LOrExpAST2::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool LOrExpAST2::SematicCheck()
+{
+    return l_and_exp->SematicCheck();
+}
+
 void LAndExpAST1::Dump(std::ofstream& stream) const
 {
 }
@@ -307,6 +359,11 @@ void LAndExpAST1::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << eqExpNode << ";\n";  // 连接 "LAndExp" 到 "EqExp"
         eq_exp->Print(stream, eqExpNode);  // 递归打印等式表达式
     }
+}
+
+bool LAndExpAST1::SematicCheck()
+{
+    return eq_exp->SematicCheck();
 }
 
 void LAndExpAST2::Dump(std::ofstream& stream) const
@@ -338,6 +395,11 @@ void LAndExpAST2::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool LAndExpAST2::SematicCheck()
+{
+    return eq_exp->SematicCheck();
+}
+
 // EqExp ::= RelExp
 void EqExpAST1::Print(std::stringstream& stream, std::string& name) const
 {
@@ -349,6 +411,11 @@ void EqExpAST1::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << relExpNode << ";\n";  // 连接 "EqExp" 到 "RelExp"
         rel_exp->Print(stream, relExpNode);  // 递归打印关系表达式
     }
+}
+
+bool EqExpAST1::SematicCheck()
+{
+    return rel_exp->SematicCheck();
 }
 
 void EqExpAST1::Dump(std::ofstream& stream) const
@@ -384,6 +451,11 @@ void EqExpAST2::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool EqExpAST2::SematicCheck()
+{
+    return rel_exp->SematicCheck();
+}
+
 void RelExpAST1::Dump(std::ofstream& stream) const
 {
 }
@@ -399,6 +471,11 @@ void RelExpAST1::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << addExpNode << ";\n";  // 连接 "RelExp" 到 "AddExp"
         add_exp->Print(stream, addExpNode);  // 递归打印加法表达式
     }
+}
+
+bool RelExpAST1::SematicCheck()
+{
+    return add_exp->SematicCheck();
 }
 
 void RelExpAST2::Dump(std::ofstream& stream) const
@@ -428,6 +505,11 @@ void RelExpAST2::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << rightAddExpNode << ";\n";  // 连接 "RelExp" 到右侧 AddExp
         add_exp->Print(stream, rightAddExpNode);  // 递归打印加法表达式
     }
+}
+
+bool RelExpAST2::SematicCheck()
+{
+    return add_exp->SematicCheck();
 }
 
 void PrimaryExpAST3::Dump(std::ofstream& stream) const
@@ -464,6 +546,11 @@ void DeclAST1::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool DeclAST1::SematicCheck()
+{
+    return const_decl->SematicCheck();
+}
+
 void ConstDeclAST::Dump(std::ofstream& stream) const
 {
 }
@@ -496,6 +583,20 @@ void ConstDeclAST::Print(std::stringstream& stream, std::string& name) const
     std::string semicolonNode = GenName();
     stream << name << " -> " << semicolonNode << ";\n";  // 连接到 ";"
     stream << semicolonNode << " [label=\";\"];\n";  // 定义分号节点
+}
+
+// ConstDecl ::= "const" BType ConstDefs  ";"
+bool ConstDeclAST::SematicCheck()
+{
+    if(const_defs->SematicCheck(btype->type))
+    {
+        variables = const_defs->variables;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void ConstDefAST::Dump(std::ofstream& stream) const
@@ -534,6 +635,17 @@ void ConstDefAST::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool ConstDefAST::SematicCheck(SysyType type)
+{
+    variableinfo.type = type;
+    if (dimen_const_exp)
+    {
+        dimen_const_exp->SematicCheck();
+        variableinfo.dimen = dimen_const_exp->dimen;
+    }
+    return true;
+}
+
 void BlockItemAST1::Dump(std::ofstream& stream) const
 {
 }
@@ -552,6 +664,11 @@ void BlockItemAST1::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool BlockItemAST1::SematicCheck()
+{
+    return decl->SematicCheck();
+}
+
 void BlockItemAST2::Dump(std::ofstream& stream) const
 {
 }
@@ -568,6 +685,11 @@ void BlockItemAST2::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << stmtNode << ";\n";  // 连接 "BlockItem2" 到 "Stmt"
         stmt->Print(stream, stmtNode);  // 递归打印语句
     }
+}
+
+bool BlockItemAST2::SematicCheck()
+{
+    return stmt->SematicCheck();
 }
 
 void LValAST::Dump(std::ofstream& stream) const
@@ -611,6 +733,11 @@ void ConstExpAST::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool ConstExpAST::SematicCheck()
+{
+    return exp->SematicCheck();
+}
+
 void BTypeAST::Dump(std::ofstream& stream) const
 {
 }
@@ -626,9 +753,10 @@ void BTypeAST::Print(std::stringstream& stream, std::string& name) const
     {
         case SysyType::INT: typeName = "int"; break;
         case SysyType::FLOAT: typeName = "float"; break;
+        case SysyType::VOID: typeName = "void"; break;
         default: typeName = "unknown"; break;
     }
-    stream << name << " [label=\"" << typeName << "\"];\n";  // 输出基本类型
+    stream << name1 << " [label=\"" << typeName << "\"];\n";  // 输出基本类型
 }
 
 // Decl ::= VarDecl
@@ -642,6 +770,11 @@ void DeclAST2::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << varDeclNode << ";\n";  // 连接 "Decl" 到 "VarDecl"
         var_decl->Print(stream, varDeclNode);  // 递归打印变量声明
     }
+}
+
+bool DeclAST2::SematicCheck()
+{
+    return var_decl->SematicCheck();
 }
 
 void DeclAST2::Dump(std::ofstream& stream) const
@@ -696,6 +829,11 @@ void VarDeclAST::Print(std::stringstream& stream, std::string& name) const
     std::string semicolonNode = GenName();
     stream << name << " -> " << semicolonNode << ";\n";  // 连接到 ";"
     stream << semicolonNode << " [label=\";\"];\n";  // 定义分号节点
+}
+
+bool VarDeclAST::SematicCheck()
+{
+    return var_defs->SematicCheck(btype->type);
 }
 
 void VarDefAST1::Dump(std::ofstream& stream) const
@@ -760,6 +898,11 @@ void StmtAST1::Print(std::stringstream& stream, std::string& name) const
     stream << semicolonNode << " [label=\";\"];\n";  // 创建子节点 ";"
 }
 
+bool StmtAST1::SematicCheck()
+{
+    return exp->SematicCheck();
+}
+
 void StmtAST1::Dump(std::ofstream& stream) const
 {
 }
@@ -796,6 +939,11 @@ void StmtAST2::Print(std::stringstream& stream, std::string& name) const
     stream << semicolonNode << " [label=\";\"];\n";  // 创建子节点 ";"
 }
 
+bool StmtAST2::SematicCheck()
+{
+    return exp->SematicCheck();
+}
+
 void InitValAST::Dump(std::ofstream& stream) const
 {
 }
@@ -823,6 +971,11 @@ void StmtAST3::Print(std::stringstream& stream, std::string& name) const
     stream << semicolonNode << " [label=\";\"];\n";  // 创建子节点 ";"
 }
 
+bool StmtAST3::SematicCheck()
+{
+    return exp->SematicCheck();
+}
+
 void StmtAST4::Dump(std::ofstream& stream) const
 {
 }
@@ -838,6 +991,11 @@ void StmtAST4::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << blockNode << ";\n";  // 连接 "Stmt" 到 "Block"
         block->Print(stream, blockNode);  // 递归打印块
     }
+}
+
+bool StmtAST4::SematicCheck()
+{
+    return block->SematicCheck();
 }
 
 void StmtAST5::Dump(std::ofstream& stream) const
@@ -856,14 +1014,14 @@ void StmtAST5::Print(std::stringstream& stream, std::string& name) const
     // 创建括号并连接
     std::string openParenNode = GenName();
     std::string closeParenNode = GenName();
-    stream << ifNode << " -> " << openParenNode << ";\n";
+    stream << name << " -> " << openParenNode << ";\n";
     stream << openParenNode << " [label=\"(\"];\n";
     
     std::string expNode = GenName();
     stream << name << " -> " << expNode << ";\n";  // 连接 "Stmt" 到表达式
     exp->Print(stream, expNode);  // 递归打印表达式
 
-    stream << ifNode << " -> " << closeParenNode << ";\n";
+    stream << name << " -> " << closeParenNode << ";\n";
     stream << closeParenNode << " [label=\")\"];\n";
 
     // 连接到真分支
@@ -878,7 +1036,7 @@ void StmtAST5::Print(std::stringstream& stream, std::string& name) const
         stream << name << " -> " << elseNode << ";\n";  
         stream << elseNode << " [label=\"else\"];\n";  // 创建子节点 "else"
         std::string falseStmtNode = GenName();
-        stream << elseNode << " -> " << falseStmtNode << ";\n";  
+        stream << name << " -> " << falseStmtNode << ";\n";  
         false_stmt->Print(stream, falseStmtNode);  // 递归打印假分支
     }
 }
@@ -978,6 +1136,17 @@ void UnaryExpAST3::Print(std::stringstream& stream, std::string& name) const
     stream << closeParenNode << " [label=\")\"];\n";  // 创建右括号
 }
 
+bool UnaryExpAST3::SematicCheck()
+{
+    if (funcTable.find(ident) == funcTable.end())
+    {
+        Error("未经定义的函数: " + ident);
+        return false;
+    }
+
+    return true;
+}
+
 void FuncFParamAST::Dump(std::ofstream& stream) const
 {
 }
@@ -1014,6 +1183,12 @@ void FuncFParamAST::Print(std::stringstream& stream, std::string& name) const
             (*dimen_const_exp_wrap)->Print(stream, dimenConstExpNode);  // 递归打印维度常量表达式
         }
     }
+}
+
+bool FuncFParamAST::SematicCheck()
+{
+    info = {btype->type, std::vector<int>()};
+    return true;
 }
 
 void UnaryExpAST3::Dump(std::ofstream& stream) const
@@ -1074,6 +1249,37 @@ void FuncDefAST::Print(std::stringstream& stream, std::string& name) const
     block->Print(stream, name6);
 }
 
+bool FuncDefAST::SematicCheck()
+{
+    if (func_fparams)
+    {
+        func_fparams->SematicCheck();
+        if (funcTable.find(ident) != funcTable.end())
+        {
+            Error("函数重复定义: " + ident);
+            return false;
+        }
+        else
+        {
+            funcTable[ident] = {func_type->type, func_fparams->variables};
+        }
+        
+    }
+    else
+    {
+        if (funcTable.find(ident) != funcTable.end())
+        {
+            Error("函数重复定义: " + ident);
+            return false;
+        }
+        else
+        {
+            funcTable[ident] = {func_type->type, std::vector<VariableInfo>()};
+        }
+    }
+    return block->SematicCheck();
+}
+
 void FuncFParamsAST::Dump(std::ofstream& stream) const
 {
 }
@@ -1104,6 +1310,22 @@ void FuncFParamsAST::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool FuncFParamsAST::SematicCheck()
+{
+    func_fparam->SematicCheck();
+    if (func_fparams)
+    {
+        func_fparams->SematicCheck();
+        variables = func_fparams->variables;
+        variables.insert(variables.begin(), func_fparam->info);
+    }
+    else
+    {
+        variables.push_back(func_fparam->info);
+    }
+    return true;
+}
+
 void VarDefsAST::Dump(std::ofstream& stream) const
 {
 }
@@ -1131,6 +1353,37 @@ void VarDefsAST::Print(std::stringstream& stream, std::string& name) const
         std::string nextVarDefsNode = GenName();  // 生成子节点名称
         stream << name << " -> " << nextVarDefsNode << ";\n";  // 连接 "VarDefs" 到下一个 "VarDefs"
         var_defs->Print(stream, nextVarDefsNode);  // 递归打印下一个变量定义
+    }
+}
+
+bool VarDefsAST::SematicCheck(SysyType type)
+{
+    var_def->SematicCheck(type);
+    if (var_defs)
+    {
+        if (var_defs->SematicCheck(type))
+        {
+            variables = var_defs->variables;
+            if (variables.find(var_def->ident) != variables.end())
+            {
+                Error("变量重复声明: " + var_def->ident);
+                return false;
+            }
+            else
+            {
+                variables[var_def->ident] = var_def->info;
+                return true;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        variables[var_def->ident] = var_def->info;
+        return true;
     }
 }
 
@@ -1164,6 +1417,38 @@ void ConstDefsAST::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+// ConstDefs ::= ConstDef ["," ConstDefs]
+bool ConstDefsAST::SematicCheck(SysyType type)
+{
+    const_def->SematicCheck(type);
+    if (const_defs)
+    {
+        if(const_defs->SematicCheck(type))
+        {
+            variables = const_defs->variables;
+            if (variables.find(const_def->ident) != variables.end())
+            {
+                Error("变量重复声明: " + const_def->ident);
+                return false;
+            }
+            else
+            {
+                variables[const_def->ident] = const_def->variableinfo;
+            }
+        }
+        else
+        {
+            return false;
+        }        
+    }
+    else
+    {
+        variables[const_def->ident] = const_def->variableinfo;
+        return true;
+    }
+    return true;
+}
+
 void BlockItemsAST::Dump(std::ofstream& stream) const
 {
 }
@@ -1190,6 +1475,32 @@ void BlockItemsAST::Print(std::stringstream& stream, std::string& name) const
     }
 }
 
+bool BlockItemsAST::SematicCheck()
+{
+    if (block_item)
+    {
+        if (!block_item->SematicCheck())
+        {
+            return false;
+        }
+        else
+        {
+            if (block_items)
+            {
+                if(!block_items->SematicCheck())
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 void CompUnitAST1::Dump(std::ofstream& stream) const
 {
 }
@@ -1209,11 +1520,29 @@ void CompUnitAST1::Print(std::stringstream& stream, std::string& name) const
     func_def->Print(stream, name2);
 }
 
+// CompUnit ::= [CompUnit] FuncDef
+bool CompUnitAST1::SematicCheck()
+{
+    if ((!comp_unit || comp_unit->SematicCheck()) && func_def->SematicCheck())
+    {
+        if (comp_unit)
+        {
+            variables = comp_unit->variables;
+        }
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void CompUnitAST2::Dump(std::ofstream& stream) const
 {
 }
 
-// CompUnit ::= [CompUnit] Decl
+// CompUnit ::= [CompUnit] ConstDecl
 void CompUnitAST2::Print(std::stringstream& stream, std::string& name) const
 {
     stream << name << " [label=\"CompUnit\"];\n";
@@ -1225,7 +1554,36 @@ void CompUnitAST2::Print(std::stringstream& stream, std::string& name) const
         comp_unit->Print(stream, name1);
     }
     stream << name << "->" << name2 << ";\n";
-    decl->Print(stream, name2);
+    const_decl->Print(stream, name2);
+}
+
+// CompUnit ::= [CompUnit] ConstDecl
+bool CompUnitAST2::SematicCheck()
+{
+    if ((!comp_unit || comp_unit->SematicCheck()) && const_decl->SematicCheck())
+    {
+        if (comp_unit)
+        {
+            variables = comp_unit->variables;
+        }
+        for (auto const& [name, info] : const_decl->variables)
+        {
+            if (variables.find(name) != variables.end())
+            {
+                Error("变量重复声明: " + name);
+                return false;
+            }
+            else
+            {
+                variables[name] = info;
+            }
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void RootAST::Dump(std::ofstream& stream) const
@@ -1241,6 +1599,30 @@ void RootAST::Print(std::stringstream& stream, std::string& name) const
     stream << name << " -> " << name1 << ";\n";
     comp_unit->Print(stream, name1);
     stream << "}";
+}
+
+// Root ::= CompUnit
+bool RootAST::SematicCheck()
+{
+    if (comp_unit->SematicCheck())
+    {
+        if (funcTable.find("main") == funcTable.end())
+        {
+            Error("未找到main函数");
+            return false;
+        }
+        auto f = funcTable["main"];
+        if (f.returnType != SysyType::INT || !(f.paramType.empty()))
+        {
+            Error("main函数参数或返回值错误");
+            return false;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void ExpsAST::Dump(std::ofstream& stream) const
@@ -1491,5 +1873,265 @@ void DimenExpAST::Print(std::stringstream& stream, std::string& name) const
     {
         dimen_exp->Print(stream, name);  // 递归打印
     }
+}
+
+void CompUnitAST3::Dump(std::ofstream &stream) const
+{
+}
+
+
+// CompUnit ::= [CompUnit] FDef_VDecl
+void CompUnitAST3::Print(std::stringstream &stream, std::string &name) const
+{
+    stream << name << " [label=\"CompUnit\"];\n";  // 创建父节点 "DimenExp"
+
+    if (comp_unit)
+    {
+        std::string comp_unitNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << comp_unitNode << ";\n";
+        comp_unit->Print(stream, comp_unitNode);  // 递归打印表达式
+    }
+
+    if (fdef_vdecl)
+    {
+        std::string fdef_vdeclNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << fdef_vdeclNode << ";\n";
+        fdef_vdecl->Print(stream, fdef_vdeclNode);  // 递归打印表达式
+    }
+}
+
+// CompUnit ::= [CompUnit] FDef_VDecl
+bool CompUnitAST3::SematicCheck()
+{
+    if (comp_unit)
+    {
+        if (comp_unit->SematicCheck() && fdef_vdecl->SematicCheck())
+        {
+            variables = comp_unit->variables;
+            
+            for (auto const& [name, info] : fdef_vdecl->variables)
+            {
+                if (variables.find(name) != variables.end())
+                {
+                    Error("变量重复定义: " + name);
+                    return false;
+                }
+                else
+                {
+                    variables[name] = info;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        if (fdef_vdecl->SematicCheck())
+        {
+            variables = fdef_vdecl->variables;
+            return true;
+        }
+        return false;
+    }
+}
+
+void FDef_VDeclAST::Dump(std::ofstream &stream) const
+{
+}
+
+// FDef_VDecl ::= FVType IDENT FDef_VDeclSuffix
+void FDef_VDeclAST::Print(std::stringstream &stream, std::string &name) const
+{
+    stream << name << " [label=\"FDef_VDecl\"];\n";  // 创建父节点 "DimenExp"
+
+    if (fvtype)
+    {
+        std::string fvtypeNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << fvtypeNode << ";\n";
+        fvtype->Print(stream, fvtypeNode);  // 递归打印表达式
+    }
+
+    std::string identNode = GenName();
+    stream << name << " -> " << identNode << ";\n";
+    stream << identNode << " [label=\"" << ident << "\"];\n";
+
+    if (fdef_vdecl_suffix)
+    {
+        std::string fdef_vdecl_suffixNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << fdef_vdecl_suffixNode << ";\n";
+        fdef_vdecl_suffix->Print(stream, fdef_vdecl_suffixNode);  // 递归打印表达式
+    }
+}
+
+bool FDef_VDeclAST::SematicCheck()
+{
+    if (dynamic_cast<FDef_VDeclSuffixAST1*>(fdef_vdecl_suffix.get()))
+    {
+        FDef_VDeclSuffixAST1* ptr = dynamic_cast<FDef_VDeclSuffixAST1*>(fdef_vdecl_suffix.get());
+        ptr->SematicCheck(fvtype->type);
+        variables = ptr->variables;
+        if (variables.find(ident) != variables.end())
+        {
+            Error("变量重复声明: " + ident);
+            return false;
+        }
+        else
+        {
+            variables[ident] = {fvtype->type, std::vector<int>()};
+            return true;
+        }
+    }
+    else
+    {
+        FDef_VDeclSuffixAST2* ptr = dynamic_cast<FDef_VDeclSuffixAST2*>(fdef_vdecl_suffix.get());
+        ptr->SematicCheck();
+        if (funcTable.find(ident) != funcTable.end())
+        {
+            Error("函数重定义: " + ident);
+            return false;
+        }
+        else
+        {
+            
+            funcTable[ident] = {fvtype->type, ptr->variables};
+        }
+    }
+    return true;
+}
+
+void FVTypeAST::Dump(std::ofstream &stream) const
+{
+}
+
+void FVTypeAST::Print(std::stringstream &stream, std::string &name) const
+{
+    stream << name << " [label=\"FVType\"];\n";
+
+    std::string name1 = GenName();
+    stream << name << " -> " << name1 << ";\n";
+    std::string typeName;
+    switch(type)
+    {
+        case SysyType::INT: typeName = "int"; break;
+        case SysyType::FLOAT: typeName = "float"; break;
+        case SysyType::VOID: typeName = "void"; break;
+        default: typeName = "unknown"; break;
+    }
+    stream << name1 << " [label=\"" << typeName << "\"];\n";
+}
+
+void FDef_VDeclSuffixAST1::Dump(std::ofstream &stream) const
+{
+}
+
+// FDef_VDeclSuffix ::= [DimenConstExp] ["=" InitVal] ["," VarDefs] ";"
+void FDef_VDeclSuffixAST1::Print(std::stringstream &stream, std::string &name) const
+{
+    stream << name << " [label=\"FDef_VDeclSuffix\"];\n";
+    
+    if (dimen_const_exp)
+    {
+        std::string dimen_const_expNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << dimen_const_expNode << ";\n";
+        dimen_const_exp->Print(stream, dimen_const_expNode);  // 递归打印表达式
+    }
+
+    if (init_val)
+    {
+        std::string dotNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << dotNode << ";\n";
+        stream << dotNode << " [label=\"=\"];\n";
+
+        std::string init_valNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << init_valNode << ";\n";
+        init_val->Print(stream, init_valNode);  // 递归打印表达式
+    }
+
+    if (var_defs)
+    {
+        std::string dotNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << dotNode << ";\n";
+        stream << dotNode << " [label=\",\"];\n";
+
+        std::string var_defsNode = GenName();  // 生成子节点名称
+        stream << name << " -> " << var_defsNode << ";\n";
+        var_defs->Print(stream, var_defsNode);  // 递归打印表达式
+    }
+
+    std::string dotNode = GenName();  // 生成子节点名称
+    stream << name << " -> " << dotNode << ";\n";
+    stream << dotNode << " [label=\";\"];\n";
+}
+
+bool FDef_VDeclSuffixAST1::SematicCheck(SysyType type)
+{
+    if (dimen_const_exp)
+    {
+        dimen_const_exp->SematicCheck();
+    }
+    if (var_defs)
+    {
+        if (var_defs->SematicCheck(type))
+        {
+            variables = var_defs->variables;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void FDef_VDeclSuffixAST2::Dump(std::ofstream &stream) const
+{
+}
+
+// FDef_VDeclSuffix ::= "(" [FuncFParams] ")" Block 
+void FDef_VDeclSuffixAST2::Print(std::stringstream &stream, std::string &name) const
+{
+    stream << name << " [label=\"FDef_VDeclSuffix\"];\n";
+    std::string name3 = GenName();
+    std::string name4 = GenName();
+    std::string name5 = GenName();
+    std::string name6 = GenName();
+    
+    stream << name << "->" << name3 << ";\n";
+    stream << name3 << " [label=\"(\"];\n";
+
+    if (func_fparams)
+    {
+        stream << name << "->" << name4 << ";\n";
+        func_fparams->Print(stream, name4);
+    }
+
+    stream << name << "->" << name5 << ";\n";
+    stream << name5 << " [label=\")\"];\n";
+    
+    stream << name << "->" << name6 << ";\n";
+    block->Print(stream, name6);
+}
+
+bool FDef_VDeclSuffixAST2::SematicCheck()
+{
+    if (func_fparams)
+    {
+        func_fparams->SematicCheck();
+        variables = func_fparams->variables;
+    }
+    return block->SematicCheck();
+}
+
+bool VarDefAST::SematicCheck(SysyType type)
+{
+    if (dimen_const_exp)
+    {
+        dimen_const_exp->SematicCheck();
+        info.dimen = dimen_const_exp->dimen; 
+    }
+    info.type = type;
+    return true;
 }
 
