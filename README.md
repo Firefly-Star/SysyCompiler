@@ -1,77 +1,35 @@
-### 目前可以识别的产生式:
-    产生式                                                           抽象语法树结点
-    Root          ::= CompUnit                                      (RootAST)
-    CompUnit      ::= [CompUnit] ConstDecl                          (CompUnitAST2)
-                    | [CompUnit] FuncDef                            (CompUnitAST1)
-                    | [CompUnit] FDef_VDecl                         (CompUnitAST3)
+# SysY Compiler
 
-    FDef_VDecl    ::= FVType IDENT FDef_VDeclSuffix                 (FDef_VDeclAST)
-    FDef_VDeclSuffix
-                  ::= [DimenConstExp] ["=" InitVal] ["," VarDefs] ";" (FDef_VDeclSuffixAST1)
-                    | "(" [FuncFParams] ")" Block                     (FDef_VDeclAST2)
+A compiler for the SysY programming language (a subset of C), built with C++ using Flex and Bison.
 
-    FVType        ::= "int" | "float"
+## Description
 
-    Decl          ::= ConstDecl                                     (DeclAST1)
-                    | VarDecl                                       (DeclAST2)
-    ConstDecl     ::= "const" BType ConstDefs ";"                   (ConstDeclAST)
-    BType         ::= "int" |"float"                                (BTypeAST)
-    ConstDefs     ::= ConstDef ["," ConstDefs]                      (ConstDefsAST)
-    ConstDef      ::= IDENT [DimenConstExp] "=" ConstInitVal        (ConstDefAST)
-    DimenConstExp ::= "[" ConstExp "]" [DimenConstExp]              (DimenConstExpAST)
-    ConstInitVal  ::= ConstExp                                      (ConstInitValAST1)
-                    | "{" [ConstInitVals] "}"                       (ConstInitValAST2)
-    ConstInitVals ::= ConstInitVal ["," ConstInitVals]              (ConstInitValsAST)
-    
-    VarDecl       ::= BType VarDefs ";"                             (VarDeclAST)
-    VarDefs       ::= VarDef ["," VarDefs]                          (VarDefsAST)
-    VarDef        ::= IDENT [DimenConstExp]                         (VarDefAST1)
-                    | IDENT [DimenConstExp] "=" InitVal             (VarDefAST2)
-    InitVal       ::= Exp;                                          (InitValAST1)
-                    | "{" [InitVals] "}"                            (InitValAST2)
-    InitVals      ::= InitVal ["," InitVals]                        (InitValsAST)
+SysY Compiler translates SysY source code into target code through lexical analysis, syntax analysis, semantic analysis, and code generation. SysY is a simplified C-like language used for compiler design education.
 
-    FuncDef       ::= FuncType IDENT "(" [FuncFParams] ")" Block    (FuncDefAST)
-    FuncType      ::= "void"                                        (FuncTypeAST)
-    FuncFParams   ::= FuncFParam ["," FuncFParams]                  (FuncFParamsAST)
-    FuncFParam ::= BType IDENT ["[" "]" [DimenConstExp]]            (FuncFParamAST)
+## Features
 
-    Block         ::= "{" [BlockItems] "}"                          (BlockAST)
-    BlockItems    ::= BlockItem [BlockItems]                        (BlockItemsAST)
-    BlockItem     ::= Decl                                          (BlockItemAST1) 
-                    | Stmt                                          (BlockItemAST2)
-    Stmt          ::= LVal "=" Exp ";"                              (StmtAST2)
-                    | [Exp] ";"                                     (StmtAST3)
-                    | Block                                         (StmtAST4)
-                    | "if" "(" Exp ")" Stmt ["else" Stmt]           (StmtAST5)
-                    | "while" "(" Exp ")" Stmt                      (StmtAST6)
-                    | "break" ";"                                   (StmtAST7)
-                    | "continue" ";"                                (StmtAST8)
-                    | "return" [Exp] ";"                            (StmtAST1)
+- Lexical analysis with Flex
+- Syntax analysis with Bison (LALR parser)
+- Abstract Syntax Tree (AST) generation
+- Support for int/float types, arrays, functions, control flow
 
-    Exp           ::= LOrExp                                        (ExpAST)
-    LVal          ::= IDENT [DimenExp]                              (LValAST)
-    DimenExp      ::= "[" Exp "]" [DimenExp]                        (DimenExpAST)
-    PrimaryExp    ::= "(" Exp ")"                                   (PrimaryExpAST1)
-                    | LVal                                          (PrimaryExpAST3)
-                    | Number                                        (PrimaryExpAST2)
-    Number        ::= INT_CONST;
-    UnaryExp      ::= PrimaryExp                                    (UnaryExpAST1)
-                    | IDENT "(" [FuncRParams] ")"                   (UnaryExpAST3)
-                    | UnaryOp UnaryExp                              (UnaryExpAST2)
-    UnaryOp       ::= "+" | "-" | "!";
-    FuncRParams   ::= Exps;                                         (FuncRParamsAST)
-    Exps          ::= Exp ["," Exps]                                (ExpsAST)
-    MulExp        ::= UnaryExp                                      (MulExpAST1)
-                    | MulExp ("*" | "/" | "%") UnaryExp             (MulExpAST2)
-    AddExp        ::= MulExp                                        (AddExpAST1)
-                    | AddExp ("+" | "-") MulExp                     (AddExpAST2)
-    RelExp        ::= AddExp                                        (RelExpAST1) 
-                    | RelExp ("<" | ">" | "<=" | ">=") AddExp       (RelExpAST2)
-    EqExp         ::= RelExp                                        (EqExpAST1) 
-                    | EqExp ("==" | "!=") RelExp                    (EqExpAST2)
-    LAndExp       ::= EqExp                                         (LAndExpAST1) 
-                    | LAndExp "&&" EqExp                            (LAndExpAST2)
-    LOrExp        ::= LAndExp                                       (LOrExpAST1)
-                    | LOrExp "||" LAndExp                           (LOrExpAST2)
-    ConstExp      ::= Exp;                                          (ConstExpAST)
+## Recognized Grammar
+
+The compiler supports a complete subset of SysY grammar including:
+- Variable declarations (int, float, const)
+- Function definitions
+- Control flow statements
+- Multi-dimensional arrays
+- Initializer expressions
+
+## Build
+
+```bash
+make
+```
+
+## Tech Stack
+
+- C++
+- Flex (lexical analysis)
+- Bison (syntax analysis)
